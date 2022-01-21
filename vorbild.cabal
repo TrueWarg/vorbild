@@ -26,23 +26,29 @@ source-repository head
 library
   exposed-modules:
       Lib
-  other-modules:
-      Paths_vorbild
+  -- other-modules:
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      base
+    , mtl
+    , directory
+    , filepath
   default-language: Haskell2010
+  ghc-options:
+    -Wall
 
 executable vorbild-exe
   main-is: Main.hs
   other-modules:
-      Paths_vorbild
+      CommandParse
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      base
+    , directory
+    , optparse-applicative
     , vorbild
   default-language: Haskell2010
 
