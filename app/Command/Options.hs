@@ -1,15 +1,11 @@
-module CommandParse
+module Command.Options
   ( Option(..)
---   , parse
+  , Source(..)
   )
   where
 
-import Data.Maybe (fromMaybe)
-import Options.Applicative
-
--------------------------------TYPES------------------------------------
 data Option 
-    = FromSource 
+    = FromTempatePath 
     {
          templatePath :: FilePath
        , destination :: Source
@@ -25,4 +21,3 @@ data Source
   = NoSpec
   | Dir FilePath
   deriving (Show)
-
