@@ -1,6 +1,37 @@
 module Main where
 
-import Lib
+import Command.Options
+import Command.Parsers
+
+import System.FilePath
+  ( takeExtension
+  , takeBaseName
+  , (<.>)
+  , (</>)
+  , takeFileName
+  )
+
+import System.Directory (getCurrentDirectory)
+import System.IO
 
 main :: IO ()
-main = someFunc
+main = do
+    options <- parse
+    case options of
+        FromTempatePath templatePath destination -> do
+            putStrLn "test create from path"
+            content <- readFile templatePath
+            targetDir <- case destination of
+                NoSpec -> getCurrentDirectory
+                Dir path -> pure path
+            writeFile (targetDir </> takeFileName templatePath) content
+
+        FromTemplateName name templatesSrc -> do
+            putStrLn "test create from name" 
+            templatePath <- case templatesSrc of
+                NoSpec -> fmap (\dir -> dir </> "vorbild-templates" </> name <> ".txt") getCurrentDirectory
+                Dir path -> pure path
+            content <- readFile templatePath
+            currentPath <- getCurrentDirectory
+            writeFile (currentPath </> name  <> ".txt") content
+
