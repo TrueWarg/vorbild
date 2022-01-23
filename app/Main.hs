@@ -14,6 +14,8 @@ import System.FilePath
 import System.Directory (getCurrentDirectory)
 import System.IO
 
+import Vorbild
+
 main :: IO ()
 main = do
     options <- parse
@@ -28,10 +30,8 @@ main = do
 
         FromTemplateName name templatesSrc -> do
             putStrLn "test create from name" 
-            templatePath <- case templatesSrc of
-                NoSpec -> fmap (\dir -> dir </> "vorbild-templates" </> name <> ".txt") getCurrentDirectory
-                Dir path -> pure path
-            content <- readFile templatePath
-            currentPath <- getCurrentDirectory
-            writeFile (currentPath </> name  <> ".txt") content
+            fieldsPath <- fmap (\dir -> dir </> "vorbild-templates" </> name </> "Fields.txt") getCurrentDirectory
+            fields <- Vorbild.readAndParseFields fieldsPath
+            filledFields <- Vorbild.fillFields fields
+            putStrLn $ show filledFields
 
