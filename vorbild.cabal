@@ -28,6 +28,7 @@ library
       Vorbild
   other-modules:
       Vorbild.Field
+      Vorbild.Directory
   hs-source-dirs:
       src
   build-depends:
