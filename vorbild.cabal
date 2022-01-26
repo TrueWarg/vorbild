@@ -28,6 +28,7 @@ library
       Vorbild
   other-modules:
       Vorbild.ValueConfig
+      Vorbild.TemplateValue
       Vorbild.Directory
   hs-source-dirs:
       src
