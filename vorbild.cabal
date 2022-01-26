@@ -27,7 +27,7 @@ library
   exposed-modules:
       Vorbild
   other-modules:
-      Vorbild.Field
+      Vorbild.ValueConfig
       Vorbild.Directory
   hs-source-dirs:
       src
@@ -38,6 +38,7 @@ library
     , filepath
     , text
     , hashmap
+    , aeson
   default-language: Haskell2010
   ghc-options:
     -Wall

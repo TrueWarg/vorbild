@@ -1,8 +1,9 @@
 module Vorbild
-    ( readAndParseFields
-    , fillFields
-    , Field
+    ( readAndParseConfigItemsFromJson
+    , prepareRawValues
+    , ValueConfigItem(..)
     ) where
 
-import Vorbild.Field(readAndParseFields, fillFields, Field)
+import Vorbild.ValueConfig(readAndParseConfigItemsFromJson, prepareRawValues, ValueConfigItem(..))
+
 

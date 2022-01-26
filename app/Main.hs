@@ -31,7 +31,7 @@ main = do
         FromTemplateName name templatesSrc -> do
             putStrLn "test create from name" 
             fieldsPath <- fmap (\dir -> dir </> "vorbild-templates" </> name </> "Fields.txt") getCurrentDirectory
-            fields <- Vorbild.readAndParseFields fieldsPath
-            filledFields <- Vorbild.fillFields fields
+            fields <- Vorbild.readAndParseConfigItemsFromJson fieldsPath
+            filledFields <- Vorbild.prepareRawValues fields
             putStrLn $ show filledFields
 
