@@ -5,7 +5,7 @@ module Vorbild.ValueConfig
 
 import qualified Data.Text    as Text
 import qualified Data.Text.IO as Text
-import qualified Data.HashMap as HashMap
+import qualified Data.Map.Strict as Map
 import GHC.Generics
 import Data.Aeson
 import Control.Exception
@@ -33,7 +33,7 @@ readAndParseConfigItemsFromJson path = do
         Right result -> pure result
  
 
-prepareRawValues :: [ValueConfigItem] -> IO (HashMap.Map ValueName RawValue)
+prepareRawValues :: [ValueConfigItem] -> IO (Map.Map ValueName RawValue)
 prepareRawValues fields = do
     let 
         transform = \field -> 
@@ -49,4 +49,4 @@ prepareRawValues fields = do
                     pure (name field, input)
 
     filledFields <- traverse transform fields
-    pure $ HashMap.fromList filledFields  
+    pure $ Map.fromList filledFields  
