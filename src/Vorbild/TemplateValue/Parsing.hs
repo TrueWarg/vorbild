@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Vorbild.Parsing
+module Vorbild.TemplateValue.Parsing
   ( PlaceholderSeparator
   , PlaceholderPrefix
   , parseValues
   )
   where
 
-import Vorbild.TemplateValue
-import Vorbild.ValueConfig
+import Vorbild.TemplateValue.Segment
+import Vorbild.TemplateValue.Config
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import Data.List

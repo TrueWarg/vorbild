@@ -27,10 +27,10 @@ library
   exposed-modules:
       Vorbild
   other-modules:
-      Vorbild.ValueConfig
-      Vorbild.TemplateValue
-      Vorbild.Directory
-      Vorbild.Parsing
+      Vorbild.TemplateValue.Config
+      Vorbild.TemplateValue.Segment
+      Vorbild.TemplateValue.Parsing
+      Vorbild.Source
   hs-source-dirs:
       src
   build-depends:

@@ -18,6 +18,6 @@ data Option
     deriving (Show)
 
 data Source
-  = NoSpec
-  | Dir FilePath
-  deriving (Show)
+    = NoSpec
+    | Dir FilePath
+    deriving (Show)

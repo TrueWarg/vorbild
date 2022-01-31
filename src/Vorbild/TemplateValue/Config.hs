@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
 
-module Vorbild.ValueConfig
+module Vorbild.TemplateValue.Config
  where
 
 import qualified Data.Text    as Text

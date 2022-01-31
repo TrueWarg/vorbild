@@ -1,4 +1,4 @@
-module Vorbild.Directory (getFilesRecursive)
+module Vorbild.Source (getFilesRecursive)
   where
 
 import System.Directory
@@ -25,3 +25,4 @@ splitOnFilesAndDirs :: [FilePath] -> IO ([FilePath], [FilePath])
 splitOnFilesAndDirs paths = do
     files <- filterM doesFileExist paths
     pure (files, paths \\ files)
+

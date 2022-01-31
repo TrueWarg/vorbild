@@ -9,14 +9,14 @@ import Command.Options
 
 parse :: IO Option
 parse = execParser opts
-        where
-            opts = 
-                info (helper <*> mainParser)
-                  (
-                      fullDesc
-                      <> header "Templater"
-                      <> progDesc "Generate files from specified templates"
-                  )
+    where
+        opts = 
+            info (helper <*> mainParser)
+            (
+                fullDesc
+                <> header "Templater"
+                <> progDesc "Generate files from specified templates"
+            )
 
 mainParser :: Parser Option
 mainParser =
@@ -38,7 +38,6 @@ mainParser =
                 (progDesc "Generate file from template name that vorbild will try to find in <currentDir>/vorbild_templates")
             )
        )
-
 
 fromTemplatePathParser :: Parser Option
 fromTemplatePathParser =
