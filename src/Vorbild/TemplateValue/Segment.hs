@@ -23,9 +23,12 @@ instance Semigroup TemplateValueSegment where
     Single a <> Single b = Compound (NonEmpty.fromList [Single a, Single b])
 
 readValueSegment :: TemplateValueSegment -> Text.Text
-readValueSegment value = case value of
+readValueSegment segment = case segment of
     (Single txt) -> txt
-    (Compound (item :| valueItems)) -> 
-        if (null valueItems) then txt
-        else txt <>readValueSegment (Compound $ fromList valueItems)
+    (Compound (item :| segments)) -> 
+        if (null segments) then txt
+        else txt <> readValueSegment (Compound $ fromList segments)
         where txt = readValueSegment item
+
+readValueSegmentList :: [TemplateValueSegment] -> Text.Text
+readValueSegmentList segments = mconcat (Prelude.map readValueSegment segments)

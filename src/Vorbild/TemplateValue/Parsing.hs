@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Vorbild.TemplateValue.Parsing
-  ( PlaceholderSeparator
-  , PlaceholderPrefix
+  ( PlaceholderSeparator(..)
+  , PlaceholderPrefix(..)
   , parseValues
+  , defaultSeparator
+  , defaultPrefix
   )
   where
 
@@ -45,11 +47,12 @@ extractTokens line =
     let
         (PlaceholderSeparator separator) = defaultSeparator
         (PlaceholderPrefix prefix) = defaultPrefix
+        prefixLength = T.length prefix
         splitted = filter (\txt -> not $ T.null txt) (T.splitOn separator line)
         transform = 
             (\txt -> 
               if (T.isPrefixOf prefix txt) 
-                  then Value $ T.drop (T.length prefix) txt
+                  then Value $ T.drop prefixLength txt
                   else Const txt
             )
     in
