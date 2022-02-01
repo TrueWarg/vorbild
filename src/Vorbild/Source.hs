@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Vorbild.Source (getFilesRecursive)
+module Vorbild.Source
   where
 
 import System.Directory
@@ -12,22 +12,27 @@ import System.FilePath((</>))
 import Data.List((\\))
 import Control.Monad (filterM)
 import qualified Data.Text    as T
+import qualified Data.Text.IO as TIO
 import qualified Data.Map.Strict as Map
 
 import Vorbild.TemplateValue.Segment
 import Vorbild.TemplateValue.Parsing(PlaceholderSeparator(..), PlaceholderPrefix(..), defaultSeparator, defaultPrefix)
 
-data Source
-    = Dir FilePath 
+data SourceAndContent
+    = Dir T.Text 
     | FileAndContent T.Text T.Text
 
-generateFromTemplates :: Map.Map TemplateValueId [TemplateValueSegment] -> [Source] -> [Source]
+data Source
+    = SourceDir FilePath
+    | SourceFile FilePath
+
+generateFromTemplates :: Map.Map TemplateValueId [TemplateValueSegment] -> [SourceAndContent] -> [SourceAndContent]
 generateFromTemplates _ [] = []
 generateFromTemplates values sources = map mapper sources
     where
       mapper source = 
         case source of
-          (Dir path) -> Dir path
+          (Dir path) -> Dir $ placeTemplateValues values path
           (FileAndContent path content) ->
             FileAndContent 
                (placeTemplateValues values path)
@@ -47,17 +52,24 @@ placeTemplateValues values txt =
     in
       foldr transform "" chunks
 
-getFilesRecursive :: FilePath -> IO [FilePath]
-getFilesRecursive dir = do
+getSourcesRecursive :: FilePath -> IO [Source]
+getSourcesRecursive dir = do
     content <- listDirectory dir
     (files, subdirs) <- splitOnFilesAndDirs $ fmap (\item -> dir </> item ) content
-    case subdirs of
-        [] -> pure files
-        remainingDirs -> 
-            fmap (\other -> other <> files) (foldMap getFilesRecursive remainingDirs)
+    if (subdirs == [] && files == []) then pure [SourceDir dir]
+    else 
+      if (subdirs == []) then pure $ map (\file -> SourceFile file) files
+      else fmap (\other -> other <> map (\file -> SourceFile file) files) (foldMap getSourcesRecursive subdirs)
+
 
 splitOnFilesAndDirs :: [FilePath] -> IO ([FilePath], [FilePath])
 splitOnFilesAndDirs paths = do
     files <- filterM doesFileExist paths
     pure (files, paths \\ files)
 
+toSourceAndContent :: [Source] -> IO [SourceAndContent]
+toSourceAndContent sources = traverse mapper sources
+    where
+      mapper source = case source of
+        (SourceDir path) -> pure $ Dir $ T.pack path
+        (SourceFile path) -> fmap (\content -> FileAndContent (T.pack path) content) (TIO.readFile path)

@@ -3,8 +3,8 @@
 module Vorbild.TemplateValue.Config
  where
 
-import qualified Data.Text    as Text
-import qualified Data.Text.IO as Text
+import qualified Data.Text    as T
+import qualified Data.Text.IO as T
 import qualified Data.Map.Strict as Map
 import GHC.Generics
 import Data.Aeson
@@ -14,7 +14,7 @@ data ValueConfigItem
     = ValueConfigItem
     {
         name :: ValueName
-      , label :: Maybe Text.Text
+      , label :: Maybe T.Text
       , value :: Maybe RawValue
     }
     deriving (Generic, Show)
@@ -22,8 +22,8 @@ data ValueConfigItem
 instance FromJSON ValueConfigItem
 instance ToJSON ValueConfigItem
 
-type ValueName = Text.Text
-type RawValue = Text.Text
+type ValueName = T.Text
+type RawValue = T.Text
 
 readAndParseConfigItemsFromJson :: FilePath -> IO [ValueConfigItem]
 readAndParseConfigItemsFromJson path = do
@@ -44,8 +44,8 @@ prepareRawValues fields = do
                         hint = case (label field) of
                             Nothing -> "Specify: " <> name field
                             Just txt -> txt
-                    Text.putStrLn hint
-                    input <- Text.getLine
+                    T.putStrLn hint
+                    input <- T.getLine
                     pure (name field, input)
 
     filledFields <- traverse transform fields
