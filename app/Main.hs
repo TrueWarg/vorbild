@@ -1,7 +1,7 @@
 module Main where
-
-import Command.Options
+    
 import Command.Parsers
+import Command.Options
 
 import System.FilePath
   ( takeExtension
@@ -18,20 +18,8 @@ import Vorbild
 
 main :: IO ()
 main = do
-    options <- parse
-    case options of
-        FromTempatePath templatePath destination -> do
-            putStrLn "test create from path"
-            content <- readFile templatePath
-            targetDir <- case destination of
-                NoSpec -> getCurrentDirectory
-                Dir path -> pure path
-            writeFile (targetDir </> takeFileName templatePath) content
-
-        FromTemplateName name templatesSrc -> do
-            putStrLn "test create from name" 
-            fieldsPath <- fmap (\dir -> dir </> "vorbild-templates" </> name </> "Fields.txt") getCurrentDirectory
-            fields <- Vorbild.readAndParseConfigItemsFromJson fieldsPath
-            filledFields <- Vorbild.prepareRawValues fields
-            putStrLn $ show filledFields
+    option <- parse
+    putStrLn $ templatePath option
+    putStrLn $ show $ destination option
+    pure ()
 

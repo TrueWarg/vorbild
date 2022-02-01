@@ -1,23 +1,18 @@
 module Command.Options
   ( Option(..)
-  , Source(..)
+  , Destination(..)
   )
   where
 
 data Option 
-    = FromTempatePath 
+    = Option 
     {
          templatePath :: FilePath
-       , destination :: Source
-    }
-    | FromTemplateName
-    {
-         name :: String
-       , templatesSrc :: Source
+       , destination :: Destination
     }
     deriving (Show)
 
-data Source
+data Destination
     = NoSpec
     | Dir FilePath
     deriving (Show)
