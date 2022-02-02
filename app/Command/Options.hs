@@ -1,18 +1,16 @@
 module Command.Options
   ( Option(..)
   , Destination(..)
-  )
-  where
+  ) where
 
-data Option 
-    = Option 
-    {
-         templatePath :: FilePath
-       , destination :: Destination
+data Option =
+  Option
+    { templatePath :: FilePath
+    , destination  :: Destination
     }
-    deriving (Show)
+  deriving (Show)
 
 data Destination
-    = NoSpec
-    | Dir FilePath
-    deriving (Show)
+  = NoSpec
+  | Dir FilePath
+  deriving (Show)

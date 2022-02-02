@@ -1,25 +1,19 @@
 module Main where
-    
-import Command.Parsers
-import Command.Options
 
-import System.FilePath
-  ( takeExtension
-  , takeBaseName
-  , (<.>)
-  , (</>)
-  , takeFileName
-  )
+import           Command.Options
+import           Command.Parsers
 
-import System.Directory (getCurrentDirectory)
-import System.IO
+import           System.FilePath  (takeBaseName, takeExtension, takeFileName,
+                                   (<.>), (</>))
 
-import Vorbild
+import           System.Directory (getCurrentDirectory)
+import           System.IO
+
+import           Vorbild
 
 main :: IO ()
 main = do
-    option <- parse
-    putStrLn $ templatePath option
-    putStrLn $ show $ destination option
-    pure ()
-
+  option <- parse
+  putStrLn $ templatePath option
+  putStrLn $ show $ destination option
+  pure ()
