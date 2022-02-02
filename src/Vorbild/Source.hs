@@ -45,7 +45,10 @@ generateFromTemplates values sources = map mapper sources
         (FileAndContent path content) ->
           FileAndContent
             (placeTemplateValues values path)
-            (mconcat $ map (placeTemplateValues values) (T.lines content))
+            (mconcat $
+             map
+               (\line -> placeTemplateValues values line <> "\n")
+               (T.lines content))
 
 placeTemplateValues ::
      Map.Map TemplateValueId [TemplateValueSegment] -> T.Text -> T.Text

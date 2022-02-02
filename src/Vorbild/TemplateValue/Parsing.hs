@@ -20,9 +20,9 @@ newtype PlaceholderSeparator =
 newtype PlaceholderPrefix =
   PlaceholderPrefix T.Text
 
-defaultSeparator = PlaceholderSeparator "||"
+defaultSeparator = PlaceholderSeparator "~"
 
-defaultPrefix = PlaceholderPrefix "::"
+defaultPrefix = PlaceholderPrefix "^"
 
 data Token
   = Const T.Text
@@ -45,7 +45,7 @@ parseValues raws =
        in map tokensMapper tokens
 
 -- todo: use Reader to extract some Token Value detector and extractor
--- curently const||::ValueName:modifier||const
+-- curently const~^ValueName#modifier~const
 extractTokens :: T.Text -> [Token]
 extractTokens "" = [Const ""]
 extractTokens line =

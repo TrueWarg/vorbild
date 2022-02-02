@@ -3,7 +3,6 @@
 
 module Vorbild.TemplateValue.Config where
 
-import           Control.Exception
 import           Data.Aeson
 import qualified Data.Map.Strict   as Map
 import qualified Data.Text         as T
@@ -30,7 +29,7 @@ readAndParseConfigItemsFromJson :: FilePath -> IO [ValueConfigItem]
 readAndParseConfigItemsFromJson path = do
   fields <- eitherDecodeFileStrict path :: IO (Either String [ValueConfigItem])
   case fields of
-    Left e       -> throwIO (userError e)
+    Left e       -> error e
     Right result -> pure result
 
 prepareRawValues :: [ValueConfigItem] -> IO (Map.Map ValueName RawValue)

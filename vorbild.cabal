@@ -59,6 +59,7 @@ executable vorbild
     , directory
     , optparse-applicative
     , filepath
+    , text
     , vorbild
   default-language: Haskell2010
 
