@@ -50,6 +50,11 @@ generateFromTemplates values sources = map mapper sources
                (\line -> placeTemplateValues values line <> "\n")
                (T.lines content))
 
+-- There is idea to represent all text as TemplateSegment to easy modify text
+-- and for better generalisation
+-- But need to determinate start of recursive calculation.
+-- Currently this start func placeTemplateValues.
+-- todo: research this idea (it's realy needed? How to impliment it better? etc.)
 placeTemplateValues ::
      Map.Map TemplateValueId [TemplateValueSegment] -> T.Text -> T.Text
 placeTemplateValues values txt =

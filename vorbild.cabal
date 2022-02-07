@@ -30,6 +30,7 @@ library
       Vorbild.TemplateValue.Config
       Vorbild.TemplateValue.Segment
       Vorbild.TemplateValue.Parsing
+      Vorbild.TemplateValue.Modifier
       Vorbild.Source
   hs-source-dirs:
       src
