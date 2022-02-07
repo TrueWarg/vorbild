@@ -1,7 +1,9 @@
 module Vorbild
   ( readAndParseConfigItemsFromJson
   , prepareRawValues
+  , readAndParsePlaceholderConfigFromJson
   , ValueConfigItem(..)
+  , PlaceholderConfig(..)
   , parseValues
   , readValueSegment
   , SourceAndContent(..)
@@ -13,9 +15,11 @@ module Vorbild
   ) where
 
 import           Vorbild.Source
-import           Vorbild.TemplateValue.Config  (ValueConfigItem (..),
+import           Vorbild.TemplateValue.Config  (PlaceholderConfig (..),
+                                                ValueConfigItem (..),
                                                 prepareRawValues,
-                                                readAndParseConfigItemsFromJson)
+                                                readAndParseConfigItemsFromJson,
+                                                readAndParsePlaceholderConfigFromJson)
 
 import           Vorbild.TemplateValue.Parsing (parseValues)
 import           Vorbild.TemplateValue.Segment (readValueSegment)

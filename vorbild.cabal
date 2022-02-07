@@ -31,6 +31,7 @@ library
       Vorbild.TemplateValue.Segment
       Vorbild.TemplateValue.Parsing
       Vorbild.TemplateValue.Modifier
+      Vorbild.Text
       Vorbild.Source
   hs-source-dirs:
       src

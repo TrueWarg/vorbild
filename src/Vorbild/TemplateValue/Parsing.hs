@@ -1,39 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Vorbild.TemplateValue.Parsing
-  ( PlaceholderTag(..)
-  , PlaceholderPrefix(..)
-  , ModifierSeparator(..)
-  , splitOnAnyOf
-  , parseValues
-  , defaultLTag
-  , defaultRTag
-  , defaultPrefix
+  ( parseValues
   ) where
 
 import           Data.List.NonEmpty             (fromList)
 import qualified Data.Map.Strict                as Map
 import qualified Data.Text                      as T
-import           Vorbild.TemplateValue.Config
+import           Vorbild.TemplateValue.Config   (PlaceholderConfig (..),
+                                                 RawValue, ValueName)
 import           Vorbild.TemplateValue.Modifier (Modifier, tryParseModifier)
 import           Vorbild.TemplateValue.Segment
-
-newtype PlaceholderTag =
-  PlaceholderTag T.Text
-
-newtype PlaceholderPrefix =
-  PlaceholderPrefix T.Text
-
-newtype ModifierSeparator =
-  ModifierSeparator T.Text
-
-defaultLTag = PlaceholderTag "{{"
-
-defaultRTag = PlaceholderTag "}}"
-
-defaultPrefix = PlaceholderPrefix "^"
-
-defaultMofifierSeparator = ModifierSeparator "#"
+import           Vorbild.Text(splitOnAnyOf)
 
 data Token
   = Const T.Text
@@ -41,15 +19,16 @@ data Token
   deriving (Show)
 
 parseValues ::
-     Map.Map ValueName RawValue
+     PlaceholderConfig
+  -> Map.Map ValueName RawValue
   -> Map.Map TemplateValueId [TemplateValueSegment]
-parseValues raws =
+parseValues config raws =
   if (Map.null raws)
     then Map.empty
     else Map.mapKeys TemplateValueId (Map.map valuesMapper raws)
   where
     valuesMapper raw =
-      let tokens = extractTokens raw
+      let tokens = extractTokens config raw
           tokensMapper token =
             case token of
               Const txt -> Single txt
@@ -57,22 +36,22 @@ parseValues raws =
                 Compound modifiers $ fromList (valuesMapper (raws Map.! name))
        in map tokensMapper tokens
 
--- todo: use Reader to extract some Token Value detector and extractor
+-- todo: use MonadReader to extract some Token Value detector and extractor
 -- curently const{{^ValueName#modifier1#modifier2}}const
-extractTokens :: T.Text -> [Token]
-extractTokens "" = [Const ""]
-extractTokens line =
-  let (PlaceholderTag lTeg) = defaultLTag
-      (PlaceholderTag rTeg) = defaultRTag
-      (PlaceholderPrefix prefix) = defaultPrefix
-      (ModifierSeparator modifierSeparator) = defaultMofifierSeparator
+extractTokens :: PlaceholderConfig -> T.Text -> [Token]
+extractTokens _ "" = [Const ""]
+extractTokens config line =
+  let oTeg = openTag config
+      cTeg = closeTag config
+      prefix = valuePrefix config
+      separator = modifierSeparator config
       prefixLength = T.length prefix
       splitted =
-        filter (\txt -> not $ T.null txt) (splitOnAnyOf [lTeg, rTeg] line)
+        filter (\txt -> not $ T.null txt) (splitOnAnyOf [oTeg, cTeg] line)
       constructValue txt =
         let statement = T.drop prefixLength txt
-            (valueName, modifiersBlock) = T.breakOn modifierSeparator statement
-            modifiers = parseModifiers modifiersBlock
+            (valueName, modifiersBlock) = T.breakOn separator statement
+            modifiers = parseModifiers separator modifiersBlock
          in Value modifiers valueName
       transform =
         (\txt ->
@@ -81,15 +60,10 @@ extractTokens line =
              else Const txt)
    in map transform splitted
 
-parseModifiers :: T.Text -> [Modifier]
-parseModifiers modifiersBlock =
-  let (ModifierSeparator separator) = defaultMofifierSeparator
-      dropFirstSeparator block = T.drop (T.length separator) block
+parseModifiers :: T.Text -> T.Text -> [Modifier]
+parseModifiers separator modifiersBlock =
+  let dropFirstSeparator block = T.drop (T.length separator) block
       modifiersCodes = T.splitOn separator (dropFirstSeparator modifiersBlock)
       maybeModifiers = map tryParseModifier modifiersCodes
       onlyParsed = filter (\item -> item /= Nothing) maybeModifiers
    in map (\(Just modifier) -> modifier) onlyParsed
-
-splitOnAnyOf :: [T.Text] -> T.Text -> [T.Text]
-splitOnAnyOf separators txt =
-  foldl (\acc separator -> acc >>= T.splitOn separator) [txt] separators
