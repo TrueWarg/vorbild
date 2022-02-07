@@ -25,15 +25,16 @@ main = do
     case Options.destination option of
       NoSpec           -> getCurrentDirectory
       Options.Dir path -> correctDir path
-  valueConfigPath <- correctFile $ templatePath </> defaultValueConfigName
-  templatesSourcePath <- correctDir $ templatePath </> defaultTemplateSourceDir
+  valueConfigPath <- correctFile $ templatePath </> valueConfigName
+  templatesSourcePath <- correctDir $ templatePath </> templateSourceDir
   valueConfigItems <- readAndParseConfigItemsFromJson valueConfigPath
-  values <- fmap parseValues (prepareRawValues valueConfigItems)
+  placeholderConfig <- readPlaceholderConfigOrDefault templatePath
+  values <- fmap (parseValues placeholderConfig) (prepareRawValues valueConfigItems)
   putStrLn "Processing..."
   sources <- getSourcesRecursive templatesSourcePath >>= toSourceAndContent
   let rootReplaces txtPath =
         replaceRoot templatesSourcePath destination (T.unpack txtPath)
-      generated = generateFromTemplates values sources
+      generated = generateFromTemplates placeholderConfig values sources
       writeFiles src =
         case src of
           Vorbild.Dir path -> createDirectory (rootReplaces path)
@@ -62,9 +63,34 @@ createAndWriteFile path content = do
   createDirectoryIfMissing True $ takeDirectory path
   T.writeFile path content
 
+readPlaceholderConfigOrDefault :: FilePath -> IO PlaceholderConfig
+readPlaceholderConfigOrDefault templatePath = do
+  let 
+    fullPath = templatePath </> placeholderConfigName
+    useDefaultMessage = 
+      placeholderConfigName <> " is not found, use default: " <> show defaultPlaceholderConfig
+  iIsExist <- doesFileExist fullPath
+  if (iIsExist) 
+    then
+      putStrLn "Use castom placeholder config" *>
+      readAndParsePlaceholderConfigFromJson fullPath 
+    else 
+      putStrLn useDefaultMessage *>
+      pure defaultPlaceholderConfig
+
 replaceRoot :: FilePath -> FilePath -> FilePath -> FilePath
 replaceRoot root newRoot path = newRoot </> makeRelative root path
 
-defaultValueConfigName = "values.json"
+valueConfigName = "values.json"
 
-defaultTemplateSourceDir = "source"
+placeholderConfigName = "placeholder.json"
+
+templateSourceDir = "source"
+
+defaultPlaceholderConfig =
+  PlaceholderConfig
+    { openTag = "{{"
+    , closeTag = "}}"
+    , valuePrefix = "^"
+    , modifierSeparator = ">>"
+    }

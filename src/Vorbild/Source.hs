@@ -17,11 +17,9 @@ import qualified Data.Map.Strict               as Map
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 import           System.FilePath               ((</>))
+import           Vorbild.Text                  (splitOnAnyOf)
 
-import           Vorbild.TemplateValue.Parsing (PlaceholderPrefix (..),
-                                                PlaceholderTag (..),
-                                                defaultPrefix, defaultLTag, defaultRTag, splitOnAnyOf)
-
+import           Vorbild.TemplateValue.Config
 import           Vorbild.TemplateValue.Segment
 
 data SourceAndContent
@@ -33,21 +31,22 @@ data Source
   | SourceFile FilePath
 
 generateFromTemplates ::
-     Map.Map TemplateValueId [TemplateValueSegment]
+     PlaceholderConfig
+  -> Map.Map TemplateValueId [TemplateValueSegment]
   -> [SourceAndContent]
   -> [SourceAndContent]
-generateFromTemplates _ [] = []
-generateFromTemplates values sources = map mapper sources
+generateFromTemplates _ _ [] = []
+generateFromTemplates config values sources = map mapper sources
   where
     mapper source =
       case source of
-        (Dir path) -> Dir $ placeTemplateValues values path
+        (Dir path) -> Dir $ placeTemplateValues config values path
         (FileAndContent path content) ->
           FileAndContent
-            (placeTemplateValues values path)
+            (placeTemplateValues config values path)
             (mconcat $
              map
-               (\line -> placeTemplateValues values line <> "\n")
+               (\line -> placeTemplateValues config values line <> "\n")
                (T.lines content))
 
 -- There is idea to represent all text as TemplateSegment to easy modify text
@@ -56,13 +55,17 @@ generateFromTemplates values sources = map mapper sources
 -- Currently this start func placeTemplateValues.
 -- todo: research this idea (it's realy needed? How to impliment it better? etc.)
 placeTemplateValues ::
-     Map.Map TemplateValueId [TemplateValueSegment] -> T.Text -> T.Text
-placeTemplateValues values txt =
-  let (PlaceholderTag lTeg) = defaultLTag
-      (PlaceholderTag rTeg) = defaultRTag
-      (PlaceholderPrefix prefix) = defaultPrefix
+     PlaceholderConfig
+  -> Map.Map TemplateValueId [TemplateValueSegment]
+  -> T.Text
+  -> T.Text
+placeTemplateValues config values txt =
+  let oTeg = openTag config
+      cTeg = closeTag config
+      prefix = valuePrefix config
       prefixLength = T.length prefix
-      chunks = filter (\chunk -> not $ T.null chunk) (splitOnAnyOf [lTeg, rTeg] txt)
+      chunks =
+        filter (\chunk -> not $ T.null chunk) (splitOnAnyOf [oTeg, cTeg] txt)
       transform chunk acc =
         if (T.isPrefixOf prefix chunk)
           then (readValueSegmentList $

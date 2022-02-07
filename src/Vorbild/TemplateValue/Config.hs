@@ -4,9 +4,9 @@
 module Vorbild.TemplateValue.Config where
 
 import           Data.Aeson
-import qualified Data.Map.Strict   as Map
-import qualified Data.Text         as T
-import qualified Data.Text.IO      as T
+import qualified Data.Map.Strict as Map
+import qualified Data.Text       as T
+import qualified Data.Text.IO    as T
 import           GHC.Generics
 
 data ValueConfigItem =
@@ -24,6 +24,19 @@ instance ToJSON ValueConfigItem
 type ValueName = T.Text
 
 type RawValue = T.Text
+
+data PlaceholderConfig =
+  PlaceholderConfig
+    { openTag           :: T.Text
+    , closeTag          :: T.Text
+    , valuePrefix       :: T.Text
+    , modifierSeparator :: T.Text
+    }
+  deriving (Generic, Show)
+
+instance FromJSON PlaceholderConfig
+
+instance ToJSON PlaceholderConfig
 
 readAndParseConfigItemsFromJson :: FilePath -> IO [ValueConfigItem]
 readAndParseConfigItemsFromJson path = do
@@ -48,3 +61,10 @@ prepareRawValues fields = do
               pure (name field, input)
   filledFields <- traverse transform fields
   pure $ Map.fromList filledFields
+
+readAndParsePlaceholderConfigFromJson :: FilePath -> IO PlaceholderConfig
+readAndParsePlaceholderConfigFromJson path = do
+    config <- eitherDecodeFileStrict path :: IO (Either String PlaceholderConfig)
+    case config of
+      Left e       -> error e
+      Right result -> pure result
