@@ -19,8 +19,8 @@ import qualified Data.Text.IO                  as TIO
 import           System.FilePath               ((</>))
 
 import           Vorbild.TemplateValue.Parsing (PlaceholderPrefix (..),
-                                                PlaceholderSeparator (..),
-                                                defaultPrefix, defaultSeparator)
+                                                PlaceholderTag (..),
+                                                defaultPrefix, defaultLTag, defaultRTag, splitOnAnyOf)
 
 import           Vorbild.TemplateValue.Segment
 
@@ -58,10 +58,11 @@ generateFromTemplates values sources = map mapper sources
 placeTemplateValues ::
      Map.Map TemplateValueId [TemplateValueSegment] -> T.Text -> T.Text
 placeTemplateValues values txt =
-  let (PlaceholderSeparator separator) = defaultSeparator
+  let (PlaceholderTag lTeg) = defaultLTag
+      (PlaceholderTag rTeg) = defaultRTag
       (PlaceholderPrefix prefix) = defaultPrefix
       prefixLength = T.length prefix
-      chunks = filter (\chunk -> not $ T.null chunk) (T.splitOn separator txt)
+      chunks = filter (\chunk -> not $ T.null chunk) (splitOnAnyOf [lTeg, rTeg] txt)
       transform chunk acc =
         if (T.isPrefixOf prefix chunk)
           then (readValueSegmentList $

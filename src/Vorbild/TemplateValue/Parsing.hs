@@ -1,11 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Vorbild.TemplateValue.Parsing
-  ( PlaceholderSeparator(..)
+  ( PlaceholderTag(..)
   , PlaceholderPrefix(..)
   , ModifierSeparator(..)
+  , splitOnAnyOf
   , parseValues
-  , defaultSeparator
+  , defaultLTag
+  , defaultRTag
   , defaultPrefix
   ) where
 
@@ -16,8 +18,8 @@ import           Vorbild.TemplateValue.Config
 import           Vorbild.TemplateValue.Modifier (Modifier, tryParseModifier)
 import           Vorbild.TemplateValue.Segment
 
-newtype PlaceholderSeparator =
-  PlaceholderSeparator T.Text
+newtype PlaceholderTag =
+  PlaceholderTag T.Text
 
 newtype PlaceholderPrefix =
   PlaceholderPrefix T.Text
@@ -25,7 +27,9 @@ newtype PlaceholderPrefix =
 newtype ModifierSeparator =
   ModifierSeparator T.Text
 
-defaultSeparator = PlaceholderSeparator "~"
+defaultLTag = PlaceholderTag "{{"
+
+defaultRTag = PlaceholderTag "}}"
 
 defaultPrefix = PlaceholderPrefix "^"
 
@@ -34,7 +38,7 @@ defaultMofifierSeparator = ModifierSeparator "#"
 data Token
   = Const T.Text
   | Value [Modifier] T.Text
-  deriving Show
+  deriving (Show)
 
 parseValues ::
      Map.Map ValueName RawValue
@@ -54,15 +58,17 @@ parseValues raws =
        in map tokensMapper tokens
 
 -- todo: use Reader to extract some Token Value detector and extractor
--- curently const~^ValueName#modifier1#modifier2~const
+-- curently const{{^ValueName#modifier1#modifier2}}const
 extractTokens :: T.Text -> [Token]
 extractTokens "" = [Const ""]
 extractTokens line =
-  let (PlaceholderSeparator separator) = defaultSeparator
+  let (PlaceholderTag lTeg) = defaultLTag
+      (PlaceholderTag rTeg) = defaultRTag
       (PlaceholderPrefix prefix) = defaultPrefix
       (ModifierSeparator modifierSeparator) = defaultMofifierSeparator
       prefixLength = T.length prefix
-      splitted = filter (\txt -> not $ T.null txt) (T.splitOn separator line)
+      splitted =
+        filter (\txt -> not $ T.null txt) (splitOnAnyOf [lTeg, rTeg] line)
       constructValue txt =
         let statement = T.drop prefixLength txt
             (valueName, modifiersBlock) = T.breakOn modifierSeparator statement
@@ -83,3 +89,7 @@ parseModifiers modifiersBlock =
       maybeModifiers = map tryParseModifier modifiersCodes
       onlyParsed = filter (\item -> item /= Nothing) maybeModifiers
    in map (\(Just modifier) -> modifier) onlyParsed
+
+splitOnAnyOf :: [T.Text] -> T.Text -> [T.Text]
+splitOnAnyOf separators txt =
+  foldl (\acc separator -> acc >>= T.splitOn separator) [txt] separators
