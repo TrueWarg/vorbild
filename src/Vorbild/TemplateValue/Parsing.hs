@@ -2,6 +2,7 @@
 
 module Vorbild.TemplateValue.Parsing
   ( parseValues
+  , ValueParsingError(..)
   ) where
 
 import           Data.List.NonEmpty             (fromList)
@@ -11,33 +12,49 @@ import           Vorbild.TemplateValue.Config   (PlaceholderConfig (..),
                                                  RawValue, ValueName)
 import           Vorbild.TemplateValue.Modifier (Modifier, tryParseModifier)
 import           Vorbild.TemplateValue.Segment
-import           Vorbild.Text(splitOnAnyOf)
+import           Vorbild.Text                   (splitOnAnyOf)
 
 data Token
   = Const T.Text
   | Value [Modifier] T.Text
   deriving (Show)
 
+newtype ValueParsingError =
+  ValueParsingError
+    { valueName :: String
+    }
+
 parseValues ::
      PlaceholderConfig
   -> Map.Map ValueName RawValue
-  -> Map.Map TemplateValueId [TemplateValueSegment]
-parseValues config raws =
-  if (Map.null raws)
-    then Map.empty
-    else Map.mapKeys TemplateValueId (Map.map valuesMapper raws)
+  -> Either ValueParsingError (Map.Map TemplateValueId [TemplateValueSegment])
+parseValues config raws
+  | Map.null raws = Right Map.empty
+  | Map.null errors = Right $ Map.mapKeys TemplateValueId succeses
+  | otherwise = Left $ head $ Map.elems errors
   where
     valuesMapper raw =
       let tokens = extractTokens config raw
-          tokensMapper token =
-            case token of
-              Const txt -> Single txt
-              Value modifiers name ->
-                Compound modifiers $ fromList (valuesMapper (raws Map.! name))
-       in map tokensMapper tokens
+          selfExtractor name =
+            case (Map.lookup name raws) of
+              Just v -> valuesMapper v
+              Nothing ->
+                Left $ ValueParsingError $ T.unpack name
+       in traverse (tokensMapper selfExtractor) tokens
+    (errors, succeses) = (Map.mapEither valuesMapper raws)
 
--- todo: use MonadReader to extract some Token Value detector and extractor
--- curently const{{^ValueName#modifier1#modifier2}}const
+tokensMapper ::
+     (ValueName -> Either ValueParsingError [TemplateValueSegment])
+  -> Token
+  -> Either ValueParsingError TemplateValueSegment
+tokensMapper baseValues token =
+  case token of
+    Const txt -> Right $ Single txt
+    Value modifiers name ->
+      case (baseValues name) of
+        Left e         -> Left e
+        Right segments -> Right $ Compound modifiers $ fromList segments
+
 extractTokens :: PlaceholderConfig -> T.Text -> [Token]
 extractTokens _ "" = [Const ""]
 extractTokens config line =
@@ -60,6 +77,7 @@ extractTokens config line =
              else Const txt)
    in map transform splitted
 
+-- todo: add error for parseModifiers?
 parseModifiers :: T.Text -> T.Text -> [Modifier]
 parseModifiers separator modifiersBlock =
   let dropFirstSeparator block = T.drop (T.length separator) block

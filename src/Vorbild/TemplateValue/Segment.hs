@@ -6,7 +6,7 @@ module Vorbild.TemplateValue.Segment where
 import           Data.Hashable
 import           Data.List.NonEmpty             as NonEmpty
 import qualified Data.Text                      as T
-import           Vorbild.TemplateValue.Modifier (Modifier, applyModifier)
+import           Vorbild.TemplateValue.Modifier (Modifier, applyModifiers)
 
 data TemplateValueSegment
   = Single T.Text
@@ -30,7 +30,3 @@ readValueSegment segment =
 
 readValueSegmentList :: [TemplateValueSegment] -> T.Text
 readValueSegmentList segments = mconcat (Prelude.map readValueSegment segments)
-
-applyModifiers :: T.Text -> [Modifier] -> T.Text
-applyModifiers txt []        = txt
-applyModifiers txt (modifier : remaining) = applyModifiers (applyModifier txt modifier) remaining
