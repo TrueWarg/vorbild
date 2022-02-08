@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Vorbild.TemplateValue.Modifier
-  ( Modifier
+  ( Modifier(..)
   , applyModifier
+  , applyModifiers
   , tryParseModifier
   ) where
 
@@ -19,6 +20,10 @@ applyModifier txt modifier =
     (Replace old new) -> applyReplace txt old new
     ToLower           -> T.toLower txt
 
+applyModifiers :: T.Text -> [Modifier] -> T.Text
+applyModifiers txt []        = txt
+applyModifiers txt (modifier : remaining) = applyModifiers (applyModifier txt modifier) remaining
+
 applyReplace txt old new =
   if (txt == "")
     then txt
@@ -28,21 +33,22 @@ tryParseModifier :: T.Text -> Maybe Modifier
 tryParseModifier txt = parse $ T.strip txt
   where
     parse statement
-      | T.isPrefixOf replaceCode statement = tryParceReplace statement
+      | T.isPrefixOf replaceCode statement = tryParseReplace statement
       | statement == toLowerCode = Just ToLower
       | otherwise = Nothing
 
-tryParceReplace statement =
+tryParseReplace statement =
   let argsBlock = T.drop (T.length replaceCode) statement
       args = map (\arg -> T.strip arg) (T.splitOn " " argsBlock)
-      filterEmpty args = filter (not . T.null) args
+      filterEmpty args' = filter (not . T.null) args'
    in case (filterEmpty args) of
-        old:new:[] -> Just $ Replace (parseArg old) (parseArg new)
-        otherwise  -> Nothing
+        old:new:[] -> Just $ Replace (parseReplaceArg old) (parseReplaceArg new)
+        _          -> Nothing
 
-parseArg :: T.Text -> T.Text
-parseArg arg
-  | T.head arg == '\'' && T.last arg == '\'' = T.dropAround (\ch -> ch == '\'') arg
+parseReplaceArg :: T.Text -> T.Text
+parseReplaceArg arg
+  | T.head arg == '\'' && T.last arg == '\'' =
+    T.dropAround (\ch -> ch == '\'') arg
   | otherwise = arg
 
 replaceCode = "replace"

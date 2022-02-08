@@ -27,56 +27,86 @@ main = do
       Options.Dir path -> correctDir path
   valueConfigPath <- correctFile $ templatePath </> valueConfigName
   templatesSourcePath <- correctDir $ templatePath </> templateSourceDir
-  valueConfigItems <- readAndParseConfigItemsFromJson valueConfigPath
-  placeholderConfig <- readPlaceholderConfigOrDefault templatePath
-  values <- fmap (parseValues placeholderConfig) (prepareRawValues valueConfigItems)
+  valueConfigItems <- tryReadAndParseConfigItemsFromJson valueConfigPath
+  placeholderConfig <- tryReadPlaceholderConfigOrDefault templatePath
+  values <- tryPrepareAndParseValues placeholderConfig valueConfigItems
   putStrLn "Processing..."
   sources <- getSourcesRecursive templatesSourcePath >>= toSourceAndContent
-  let rootReplaces txtPath =
+  generated <- tryGenerateFromTemplates placeholderConfig values sources
+  let replaceRoot' txtPath =
         replaceRoot templatesSourcePath destination (T.unpack txtPath)
-      generated = generateFromTemplates placeholderConfig values sources
       writeFiles src =
         case src of
-          Vorbild.Dir path -> createDirectory (rootReplaces path)
+          Vorbild.Dir path -> createDirectory (replaceRoot' path)
           FileAndContent path content ->
-            createAndWriteFile (rootReplaces path) content
+            createAndWriteFile (replaceRoot' path) content
   _ <- traverse writeFiles generated
   putStrLn "Done"
   pure ()
+
+instance Show ConfigParsingError where
+  show (ConfigParsingError cause srcPath) =
+    "File parsing error " <> srcPath <> ": " <> cause
+
+instance Show ValueParsingError where
+  show (ValueParsingError valueName) = "Unknow value with name: " <> valueName
+
+instance Show InTmpValueParsingError where
+  show (InTmpValueParsingError inTmpValueName tmpPath) =
+    "Unknow value with name: " <>
+    inTmpValueName <> " in template path: " <> tmpPath
+
+successOrPutError :: Show e => IO (Either e s) -> IO s
+successOrPutError action = do
+  result <- action
+  case result of
+    Left e  -> stderrAndExit $ show e
+    Right s -> pure s
+
+tryGenerateFromTemplates config values sources =
+  successOrPutError $ pure (generateFromTemplates config values sources)
+
+tryPrepareAndParseValues config items =
+  successOrPutError $ fmap (parseValues config) (prepareRawValues items)
+
+tryReadAndParseConfigItemsFromJson =
+  successOrPutError . readAndParseConfigItemsFromJson
+
+tryReadAndParsePlaceholderConfigFromJson =
+  successOrPutError . readAndParsePlaceholderConfigFromJson
 
 correctDir :: FilePath -> IO FilePath
 correctDir path = do
   isExist <- doesDirectoryExist path
   if (isExist)
     then pure path
-    else (hPutStrLn stderr ("Dir " <> path <> " is not exist") *> exitFailure)
+    else stderrAndExit ("Dir " <> path <> " is not exist")
 
 correctFile :: FilePath -> IO FilePath
 correctFile path = do
   isExist <- doesFileExist path
   if (isExist)
     then pure path
-    else (hPutStrLn stderr ("File " <> path <> " is not exist") *> exitFailure)
+    else stderrAndExit ("File " <> path <> " is not exist")
 
 createAndWriteFile :: FilePath -> T.Text -> IO ()
 createAndWriteFile path content = do
   createDirectoryIfMissing True $ takeDirectory path
   T.writeFile path content
 
-readPlaceholderConfigOrDefault :: FilePath -> IO PlaceholderConfig
-readPlaceholderConfigOrDefault templatePath = do
-  let 
-    fullPath = templatePath </> placeholderConfigName
-    useDefaultMessage = 
-      placeholderConfigName <> " is not found, use default: " <> show defaultPlaceholderConfig
+stderrAndExit txt = hPutStrLn stderr txt *> exitFailure
+
+tryReadPlaceholderConfigOrDefault :: FilePath -> IO PlaceholderConfig
+tryReadPlaceholderConfigOrDefault templatePath = do
+  let fullPath = templatePath </> placeholderConfigName
+      useDefaultMessage =
+        placeholderConfigName <>
+        " is not found, use default: " <> show defaultPlaceholderConfig
   iIsExist <- doesFileExist fullPath
-  if (iIsExist) 
-    then
-      putStrLn "Use castom placeholder config" *>
-      readAndParsePlaceholderConfigFromJson fullPath 
-    else 
-      putStrLn useDefaultMessage *>
-      pure defaultPlaceholderConfig
+  if (iIsExist)
+    then putStrLn "Use castom placeholder config" *>
+         tryReadAndParsePlaceholderConfigFromJson fullPath
+    else putStrLn useDefaultMessage *> pure defaultPlaceholderConfig
 
 replaceRoot :: FilePath -> FilePath -> FilePath -> FilePath
 replaceRoot root newRoot path = newRoot </> makeRelative root path
@@ -92,5 +122,5 @@ defaultPlaceholderConfig =
     { openTag = "{{"
     , closeTag = "}}"
     , valuePrefix = "^"
-    , modifierSeparator = ">>"
+    , modifierSeparator = "#"
     }
