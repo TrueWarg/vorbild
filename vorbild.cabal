@@ -36,17 +36,17 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base
-    , mtl
+      base >=4.7 && <5
+    , mtl ==2.2.2
     , directory
     , filepath
-    , text
-    , containers
-    , aeson
-    , hashable
+    , text ==1.2.4.1
+    , containers ==0.6.5.1
+    , aeson ==1.5.6.0
+    , hashable ==1.3.0.0
   default-language: Haskell2010
   ghc-options:
-    -Wall
+    -Wall -O
 
 executable vorbild
   main-is: Main.hs
@@ -55,13 +55,13 @@ executable vorbild
       Command.Parsers
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -O -rtsopts -with-rtsopts=-N
   build-depends:
-      base
+      base >=4.7 && <5
     , directory
-    , optparse-applicative
     , filepath
-    , text
+    , optparse-applicative ==0.16.1.0
+    , text ==1.2.4.1
     , vorbild
   default-language: Haskell2010
 
@@ -75,5 +75,10 @@ test-suite vorbild-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , hspec == 2.9.4
+    , hspec-discover == 2.9.4
+    , raw-strings-qq == 1.1
     , vorbild
   default-language: Haskell2010
+  build-tool-depends:
+    hspec-discover:hspec-discover
