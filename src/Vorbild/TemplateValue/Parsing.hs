@@ -7,6 +7,7 @@ module Vorbild.TemplateValue.Parsing
 
 import           Data.List.NonEmpty             (fromList)
 import qualified Data.Map.Strict                as Map
+import qualified Data.Set                       as Set
 import qualified Data.Text                      as T
 import           Vorbild.TemplateValue.Config   (PlaceholderConfig (..),
                                                  RawValue, ValueName)
@@ -19,10 +20,10 @@ data Token
   | Value [Modifier] T.Text
   deriving (Show)
 
-newtype ValueParsingError =
-  ValueParsingError
-    { valueName :: String
-    }
+data ValueParsingError
+  = UnkonwnName String
+  | CycleDeclaration String
+  deriving (Eq)
 
 parseValues ::
      PlaceholderConfig
@@ -33,15 +34,18 @@ parseValues config raws
   | Map.null errors = Right $ Map.mapKeys TemplateValueId succeses
   | otherwise = Left $ head $ Map.elems errors
   where
-    valuesMapper raw =
+    valuesMapper processed raw =
       let tokens = extractTokens config raw
           selfExtractor name =
             case (Map.lookup name raws) of
-              Just v -> valuesMapper v
-              Nothing ->
-                Left $ ValueParsingError $ T.unpack name
+              Just v ->
+                if (Set.member name processed)
+                  then Left $ CycleDeclaration $ T.unpack name
+                  else valuesMapper (Set.insert name processed) v
+              Nothing -> Left $ UnkonwnName $ T.unpack name
        in traverse (tokensMapper selfExtractor) tokens
-    (errors, succeses) = (Map.mapEither valuesMapper raws)
+    (errors, succeses) =
+      (Map.mapEither (\item -> valuesMapper Set.empty item) raws)
 
 tokensMapper ::
      (ValueName -> Either ValueParsingError [TemplateValueSegment])

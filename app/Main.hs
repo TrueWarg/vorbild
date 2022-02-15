@@ -49,7 +49,8 @@ instance Show ConfigParsingError where
     "File parsing error " <> srcPath <> ": " <> cause
 
 instance Show ValueParsingError where
-  show (ValueParsingError valueName) = "Unknow value with name: " <> valueName
+  show (UnkonwnName valueName) = "Unknow value with name: " <> valueName
+  show (CycleDeclaration valueName) = "Cycle declaration value with name: " <> valueName
 
 instance Show InTmpValueParsingError where
   show (InTmpValueParsingError inTmpValueName tmpPath) =
