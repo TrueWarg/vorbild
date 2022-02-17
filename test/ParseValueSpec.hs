@@ -22,7 +22,7 @@ spec = do
     errSample4
 
 sample1 = do
-  let expected =
+  let raws =
         Map.fromList 
         [ ("module_name", "gauss-dsb")
         , ("file_name", "core")
@@ -31,7 +31,7 @@ sample1 = do
         ]
   it "sample1" $
     shouldBe
-      (parseValues placeHolderConfig1 expected)
+      (parseValues placeHolderConfig1 raws)
       (Right
          (Map.fromList $
           [ (TemplateValueId "module_name", [Single "gauss-dsb"])
@@ -55,7 +55,7 @@ sample1 = do
           ]))
 
 sample2 = do
-  let expected =
+  let raws =
         Map.fromList 
         [ ("module_name", "linear")
         , ("file_name", "MATRIX")
@@ -64,7 +64,7 @@ sample2 = do
         ]
   it "sample2" $
     shouldBe
-      (parseValues placeHolderConfig1 expected)
+      (parseValues placeHolderConfig1 raws)
       (Right
          (Map.fromList $
           [ (TemplateValueId "module_name", [Single "linear"])
@@ -78,7 +78,7 @@ sample2 = do
           ]))
 
 sample3 = do
-  let expected =
+  let raws =
         Map.fromList 
         [ ("dir", "dir_name")
         , ("subfir", "sub_dir_name")
@@ -86,7 +86,7 @@ sample3 = do
         ]
   it "sample3" $
     shouldBe
-      (parseValues placeHolderConfig2 expected)
+      (parseValues placeHolderConfig2 raws)
       (Right
          (Map.fromList $
           [ (TemplateValueId "dir", [Single "dir_name"])
@@ -99,12 +99,12 @@ sample3 = do
           ]))
 
 sample4 = do
-  let expected =
+  let raws =
         Map.fromList 
         [("module", "MODULE"), ("flow", "||~~module^toLower||")]
   it "sample4" $
     shouldBe
-      (parseValues placeHolderConfig2 expected)
+      (parseValues placeHolderConfig2 raws)
       (Right
          (Map.fromList $
           [ (TemplateValueId "module", [Single "MODULE"])
@@ -113,14 +113,14 @@ sample4 = do
           ]))
 
 sample5 = do
-  let expected =
+  let raws =
         Map.fromList 
         [ ("screen", "ScreenName")
         , ("package", "*Open*&Prefix&screen^Mod^toLower*Close*")
         ]
   it "sample5" $
     shouldBe
-      (parseValues placeHolderConfig3 expected)
+      (parseValues placeHolderConfig3 raws)
       (Right
          (Map.fromList $
           [ (TemplateValueId "screen", [Single "ScreenName"])
@@ -129,7 +129,7 @@ sample5 = do
           ]))
 
 errSample1 = do
-  let expected =
+  let raws =
         Map.fromList 
         [ ("screen", "ScreenName")
         , ("dir", "{{^module}}")
@@ -137,28 +137,28 @@ errSample1 = do
         ]
   it "errSample1" $
     shouldBe
-      (parseValues placeHolderConfig1 expected)
+      (parseValues placeHolderConfig1 raws)
       (Left $ UnkonwnName "some_unknown_value")
 
 errSample2 = do
-  let expected = Map.fromList [("screen", "ScreenName"), ("dir", "{{^dir}}"), ("module", "{{^screen}}")]
+  let raws = Map.fromList [("screen", "ScreenName"), ("dir", "{{^dir}}"), ("module", "{{^screen}}")]
   it "errSample2" $
     shouldBe
-      (parseValues placeHolderConfig1 expected)
+      (parseValues placeHolderConfig1 raws)
       (Left $ CycleDeclaration "dir")
 
 errSample3 = do
-  let expected = Map.fromList [("screen", "ScreenName"), ("dir", "{{^kek}}"), ("module", "{{^screen}}")]
+  let raws = Map.fromList [("screen", "ScreenName"), ("dir", "{{^kek}}"), ("module", "{{^screen}}")]
   it "errSample3" $
     shouldBe
-      (parseValues placeHolderConfig1 expected)
+      (parseValues placeHolderConfig1 raws)
       (Left $ UnkonwnName "kek")
 
 errSample4 = do
-  let expected = Map.fromList [("screen", "{{^module}}"), ("dir", "{{^screen}}"), ("module", "{{^dir}}")]
+  let raws = Map.fromList [("screen", "{{^module}}"), ("dir", "{{^screen}}"), ("module", "{{^dir}}")]
   it "errSample4" $
     shouldBe
-      (parseValues placeHolderConfig1 expected)
+      (parseValues placeHolderConfig1 raws)
       (Left $ CycleDeclaration "screen")
 
 placeHolderConfig1 =

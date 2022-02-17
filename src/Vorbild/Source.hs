@@ -28,6 +28,7 @@ import           Vorbild.TemplateValue.Segment
 data SourceAndContent
   = Dir T.Text
   | FileAndContent T.Text T.Text
+  deriving (Eq, Show)
 
 data Source
   = SourceDir FilePath
@@ -38,7 +39,8 @@ data InTmpValueParsingError =
     { inTmpValueName :: String
     , tmpPath        :: String
     }
-
+  deriving (Eq)
+  
 generateFromTemplates ::
      PlaceholderConfig
   -> Map.Map TemplateValueId [TemplateValueSegment]
