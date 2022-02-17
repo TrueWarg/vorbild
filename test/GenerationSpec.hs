@@ -139,8 +139,3 @@ placeHolderConfig2 =
     , valuePrefix = "~~"
     , modifierSeparator = "^"
     }
-
-instance Show InTmpValueParsingError where
-  show (InTmpValueParsingError inTmpValueName tmpPath) =
-    "Unknow value with name: " <>
-    inTmpValueName <> " in template path: " <> tmpPath

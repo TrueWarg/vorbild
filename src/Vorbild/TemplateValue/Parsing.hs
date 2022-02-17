@@ -23,7 +23,7 @@ data Token
 data ValueParsingError
   = UnkonwnName String
   | CycleDeclaration String
-  deriving (Eq)
+  deriving (Eq, Show)
 
 parseValues ::
      PlaceholderConfig

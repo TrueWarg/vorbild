@@ -21,6 +21,7 @@ data ConfigParsingError =
     { cause   :: String
     , srcPath :: String
     }
+  deriving Show
 
 instance FromJSON ValueConfigItem
 

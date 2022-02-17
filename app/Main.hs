@@ -44,24 +44,27 @@ main = do
   putStrLn "Done"
   pure ()
 
-instance Show ConfigParsingError where
-  show (ConfigParsingError cause srcPath) =
+class Format a where
+  format :: a -> String
+
+instance Format ConfigParsingError where
+  format (ConfigParsingError cause srcPath) =
     "File parsing error " <> srcPath <> ": " <> cause
 
-instance Show ValueParsingError where
-  show (UnkonwnName valueName) = "Unknow value with name: " <> valueName
-  show (CycleDeclaration valueName) = "Cycle declaration value with name: " <> valueName
+instance Format ValueParsingError where
+  format (UnkonwnName valueName) = "Unknow value with name: " <> valueName
+  format (CycleDeclaration valueName) = "Cycle declaration value with name: " <> valueName
 
-instance Show InTmpValueParsingError where
-  show (InTmpValueParsingError inTmpValueName tmpPath) =
+instance Format InTmpValueParsingError where
+  format (InTmpValueParsingError valueName path) =
     "Unknow value with name: " <>
-    inTmpValueName <> " in template path: " <> tmpPath
+    valueName <> " in template path: " <> path
 
-successOrPutError :: Show e => IO (Either e s) -> IO s
+successOrPutError :: Format e => IO (Either e s) -> IO s
 successOrPutError action = do
   result <- action
   case result of
-    Left e  -> stderrAndExit $ show e
+    Left e  -> stderrAndExit $ format e
     Right s -> pure s
 
 tryGenerateFromTemplates config values sources =

@@ -36,10 +36,10 @@ data Source
 
 data InTmpValueParsingError =
   InTmpValueParsingError
-    { inTmpValueName :: String
-    , tmpPath        :: String
+    { valueName :: String
+    , path        :: String
     }
-  deriving (Eq)
+  deriving (Eq, Show)
   
 generateFromTemplates ::
      PlaceholderConfig

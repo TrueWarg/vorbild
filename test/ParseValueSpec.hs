@@ -184,7 +184,3 @@ placeHolderConfig3 =
     , valuePrefix = "&Prefix&"
     , modifierSeparator = "^Mod^"
     }
-
-instance Show ValueParsingError where
-  show (UnkonwnName valueName) = "Unknow value with name: " <> valueName
-  show (CycleDeclaration valueName) = "Self declaration value with name: " <> valueName
