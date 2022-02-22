@@ -5,19 +5,17 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           vorbild
-version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/vorbild#readme>
-homepage:       https://github.com/githubuser/vorbild#readme
-bug-reports:    https://github.com/githubuser/vorbild/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2022 Author name here
-license:        BSD3
+version:        1.0.0
+description:    Please see the README on GitHub at <https://github.com/TrueWarg/vorbild#readme>
+homepage:       https://github.com/TrueWarg/vorbild#readme
+bug-reports:    https://github.com/TrueWarg/vorbild/issues
+author:         TrueWarg
+copyright:      2022 TrueWarg
+license:        Apache-2.0
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
-    ChangeLog.md
 
 source-repository head
   type: git
