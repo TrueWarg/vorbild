@@ -151,5 +151,16 @@ General command looks like
 
 If -d is not specified, currently directory will be used.
 
+## Installation 
+
+Following ways are available currently:
+
+1. Just download executable files from [releases](https://github.com/TrueWarg/vorbild/releases).
+2. Use snap package manager (ubuntu only currently):
+
+```bash
+sudo snap install vorbild
+```
+
 ## License
 Vorbild is distributed under the [Apache-2.0 License](https://github.com/TrueWarg/vorbild/blob/master/LICENSE).
