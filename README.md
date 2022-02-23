@@ -1,4 +1,4 @@
-# Vorbild: Generation files from templates
+# Vorbild: Files generation from templates
 
 Vorbild is simple console app for files generation and their content from
 template sources specified by user.
