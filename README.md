@@ -33,7 +33,6 @@ vorbild-templates
     ---source
        ---{{^file_path}}/{{^feature_name}}Controller.kt
     ---values.json
-    ---placeholder.json (optional)
 ```
 
 `feature_name` is specified by user, `file_path` depends on `module_name` and `packange_name`
