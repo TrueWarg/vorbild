@@ -1,7 +1,7 @@
 # Vorbild: Generation files from templates
 
-Vorbild is simple console app for generation files and their content from
-specified by user template sources.
+Vorbild is simple console app for files generation and their content from
+template sources specified by user.
 
 It may be useful if you have regular structure and hierarchy of project files
 
@@ -19,7 +19,7 @@ Create your templates:
     ---placeholder.json (optional)
 ...
 ---<templateN-folder>
-    ---sorce
+    ---source
     ---values.json
     ---placeholder.json (optional)
 ```
