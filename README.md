@@ -1,9 +1,9 @@
-# Vorbild: Files generation from templates
+# Vorbild: File generation from templates
 
-Vorbild is simple console app for files generation and their content from
-template sources specified by user.
+Vorbild is a simple console app for generating files and their content from
+template sources specified by the user.
 
-It may be useful if you have regular structure and hierarchy of project files
+It may be useful if you have a regular structure and hierarchy of the project files.
 
 ## Using Vorbild
 
@@ -35,10 +35,10 @@ vorbild-templates
     ---values.json
 ```
 
-`feature_name` is specified by user, `file_path` depends on `module_name` and `packange_name`
+`feature_name` is specified by the user, `file_path` depends on `module_name` and `package_name`
 (see [values](#values) example).
 
-`{{^feature_name}}Controller` here is just text file with your ext (.hs, .kt, .py, .txt etc.) 
+`{{^feature_name}}Controller` here is just a text file with your extension (.hs, .kt, .py, .txt etc.) 
 and content:
 
 ```kotlin
@@ -49,11 +49,11 @@ class {{^feature_name}}Controller {
 }
 ```
 
-About `#replace '/' '.'` read [here](#modifiers).
+Read [here](#modifiers) about `#replace '/' '.'`.
 
 ### Values
 
-Values specified in `values.json`:
+Values are specified in `values.json`:
 
 ```json
 [
@@ -71,9 +71,9 @@ Values specified in `values.json`:
   }
 ]
 ```
-If item doesn't contain `value` it will be specified by user.
+If an item doesn't contain `value` then it must be specified by the user.
 
-In examble above we have 
+In the example above we have 
 
 ```json
 [
@@ -96,8 +96,8 @@ In examble above we have
 ]
 ```
 
-Suppose user input is `packange_name = core`, `module_name = temperature`, 
-`feature_name = Measurement`. So vorbild will generate this:
+Suppose that user input is `package_name = core`, `module_name = temperature`, 
+`feature_name = Measurement`. So `vorbild` will generate this:
 
 ```kotlin
 // com/core/temperature/MeasurementController.kt
@@ -112,24 +112,24 @@ class MeasurementController {
 
 ### Modifiers
 
-We use `replace '/' '.'` above. Is just replace `/` to `.` in 
+Examples above use `replace '/' '.'`. This simply replaces `/` to `.` in the
 final `file_path` value. 
 
-General expression for this modifier `replace '<str1>' '<str2>'`. 
+More general form of this modifier is `replace '<str1>' '<str2>'`. 
 
-Currently `replace` and `toLower` (turn text to lower case) modifiers are supported.
+Currently only `replace` and `toLower` (convert text to lower case) modifiers are supported.
 
-`#` is just separator for modifiers. We can use few modifiers together:
+`#` is just a separator for modifiers. Several modifiers can be used together:
 `#replace 'a' 'b'#toLower#replace 'cd' 'xy'`
 
 ### Placeholder
 
-General expression for value placeholders looks like this
+More general form for value placeholders looks like this
 
 `<openTag><valuePrefix><value><modifierSeparator><modifier1>...<modifierSeparator><modifierN><closeTag>`
 
 By default `openTag == {{`, `closeTag = }}`, `valuePrefix = ^`, `modifierSeparator = #`,
-but we can configure it in optional file `placeholder.json`:
+but it can be configured with the optional file `placeholder.json`:
 
 ```json
 {
@@ -140,7 +140,7 @@ but we can configure it in optional file `placeholder.json`:
 }
 ```
 
-If you wont use default config, just will not add this file in template folder.
+If you want to use a default config, just do not add this file to the template folder.
 
 ### Command
 
@@ -149,14 +149,14 @@ General command looks like
    vorbild (-s|--src template path) [-d|--dst destination path]
 ```
 
-If -d is not specified, currently directory will be used.
+If `-d` is not specified, current directory will be used.
 
 ## Installation 
 
-Following ways are available currently:
+The following installation methods are available at the moment:
 
-1. Just download executable files from [releases](https://github.com/TrueWarg/vorbild/releases).
-2. Use snap package manager (ubuntu only currently):
+1. Just download executable files from [releases](https://github.com/TrueWarg/vorbild/releases)
+2. Use snap package manager (ubuntu only for now):
 
 ```bash
 sudo snap install vorbild
