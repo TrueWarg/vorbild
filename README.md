@@ -156,11 +156,13 @@ If `-d` is not specified, current directory will be used.
 The following installation methods are available at the moment:
 
 1. Just download executable files from [releases](https://github.com/TrueWarg/vorbild/releases)
-2. Use snap package manager (ubuntu only for now):
+2. Use snap package manager:
 
 ```bash
 sudo snap install vorbild
 ```
+3. Download from [AUR](https://aur.archlinux.org/packages/vorbild) 
+repository using AUR helper (yay, pacaur etc.)
 
 ## License
 Vorbild is distributed under the [Apache-2.0 License](https://github.com/TrueWarg/vorbild/blob/master/LICENSE).
