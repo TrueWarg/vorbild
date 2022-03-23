@@ -2,23 +2,30 @@
 
 module Vorbild.Modifieble.Block where
 
-import           Data.List(sort, sortBy)
+import           Data.List    (sort, sortBy)
 import qualified Data.Text    as T
 import           Vorbild.Text (breakOnThree)
 
 data Descriptor =
   Descriptor
-    { dStart    :: T.Text
+    { dId       :: DescriptorId
+    , dStart    :: T.Text
     , dEnd      :: T.Text
     , dActions  :: [Action]
     , dChildren :: [Descriptor]
     }
+  deriving (Show, Eq)
+
+newtype DescriptorId =
+  DescriptorId T.Text
+  deriving (Show, Eq)
 
 data Action
   = Append T.Text
   | Prepend T.Text
   | SortLines
   | SortLinesDesc
+  deriving (Show, Eq)
 
 modify :: T.Text -> [Descriptor] -> T.Text
 modify text [] = text
@@ -32,7 +39,7 @@ modifySingle text descriptor =
       actions = dActions descriptor
       result = breakOnThree start end text
    in case result of
-        (Left err) -> text
+        (Left _) -> text
         Right (beforeStartIncl, body, afterEndIncl) ->
           beforeStartIncl <> applyActionList body actions <> afterEndIncl
 
