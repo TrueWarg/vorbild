@@ -30,6 +30,7 @@ library
       Vorbild.TemplateValue.Parsing
       Vorbild.TemplateValue.Modifier
       Vorbild.Modifieble.Block
+      Vorbild.Modifieble.Config
       Vorbild.Text
       Vorbild.Source
   hs-source-dirs:
