@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Vorbild.Modifieble.Block where
+module Vorbild.Modifieble.Block
+ ( Descriptor(..)
+ , DescriptorId(..)
+ , Action(..)
+ , modify
+ ) where
 
 import           Data.List    (sort, sortBy)
 import qualified Data.Text    as T
