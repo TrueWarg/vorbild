@@ -58,7 +58,7 @@ tokensMapper baseValues token =
       case (baseValues name) of
         Left e         -> Left e
         Right segments -> Right $ Compound modifiers $ fromList segments
-
+        
 extractTokens :: PlaceholderConfig -> T.Text -> [Token]
 extractTokens _ "" = [Const ""]
 extractTokens config line =

@@ -1,7 +1,11 @@
 {-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
 
-module Vorbild.Modifieble.Config where
+module Vorbild.Modifieble.Config
+  ( ModifiebleFile(..)
+  , BlockDescriptorItem(..)
+  , ModifiebleParsingError(..)
+  , readAndParseModifiebleConfigsFromJson
+  ) where
 
 import qualified Data.Text    as T
 
@@ -10,7 +14,7 @@ import           GHC.Generics
 
 data ModifiebleFile =
   ModifiebleFile
-    { path           :: FilePath
+    { mfPath           :: FilePath
     , rootDescriptor :: BlockDescriptorItem
     }
   deriving (Generic, Show)
@@ -22,10 +26,10 @@ instance ToJSON ModifiebleFile
 data BlockDescriptorItem =
   BlockDescriptorItem
     { id        :: T.Text
-    , dStart    :: Maybe T.Text
-    , dEnd      :: Maybe T.Text
-    , dActions  :: [T.Text]
-    , dChildren :: [BlockDescriptorItem]
+    , bdStart    :: Maybe T.Text
+    , bdEnd      :: Maybe T.Text
+    , bdActions  :: [T.Text]
+    , bdChildren :: [BlockDescriptorItem]
     }
   deriving (Generic, Show)
 
@@ -35,14 +39,14 @@ instance ToJSON BlockDescriptorItem
 
 data ModifiebleParsingError =
   ModifiebleParsingError
-    { cause   :: String
-    , srcPath :: String
+    { mfCause   :: String
+    , mfSrcPath :: String
     }
   deriving (Show)
 
-readAndParseConfigsFromJson ::
+readAndParseModifiebleConfigsFromJson ::
      [FilePath] -> IO [Either ModifiebleParsingError ModifiebleFile]
-readAndParseConfigsFromJson paths =
+readAndParseModifiebleConfigsFromJson paths =
   traverse
     (\path -> do
        result <-
