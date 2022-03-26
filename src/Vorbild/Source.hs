@@ -9,21 +9,20 @@ module Vorbild.Source
   , toSourceAndContent
   ) where
 
-import           System.Directory               (doesFileExist, listDirectory)
+import           System.Directory               (listDirectory)
 
-import           Control.Monad                  (filterM)
-import           Data.List                      ((\\))
+import           Control.Monad.Reader           (Reader, ask, runReader)
 import qualified Data.Map.Strict                as Map
 import qualified Data.Text                      as T
 import qualified Data.Text.IO                   as TIO
 import           System.FilePath                ((</>))
-import           Vorbild.Text                   (splitOnAnyOf)
-
-import           Control.Monad.Reader           (Reader, ask, runReader)
+import           Vorbild.Either
+import           Vorbild.File
 import           Vorbild.TemplateValue.Config
 import           Vorbild.TemplateValue.Modifier (Modifier (..), applyModifiers,
                                                  tryParseModifier)
 import           Vorbild.TemplateValue.Segment
+import           Vorbild.Text                   (splitOnAnyOf)
 
 data SourceAndContent
   = Dir T.Text
@@ -37,10 +36,10 @@ data Source
 data InTmpValueParsingError =
   InTmpValueParsingError
     { valueName :: String
-    , path        :: String
+    , path      :: String
     }
   deriving (Eq, Show)
-  
+
 generateFromTemplates ::
      PlaceholderConfig
   -> Map.Map TemplateValueId [TemplateValueSegment]
@@ -71,17 +70,6 @@ tryPlaceFileAndContent values path content = do
     case (eitherZipWith FileAndContent pathResult contentResult) of
       Left e  -> Left $ InTmpValueParsingError (T.unpack e) (T.unpack path)
       Right s -> Right s
-
-eitherZipWith :: (a -> b -> c) -> Either e a -> Either e b -> Either e c
-eitherZipWith f (Right a) (Right b) = Right $ f a b
-eitherZipWith _ (Left e) _          = Left e
-eitherZipWith _ _ (Left e)          = Left e
-
-isRight :: Either e a -> Bool
-isRight mea =
-  case mea of
-    Right _ -> True
-    _       -> False
 
 -- There is idea to represent all text as TemplateSegment to easy modify text
 -- and for better generalisation
@@ -116,11 +104,6 @@ placeTemplateValues values txt = do
       results = foldl transform (Right "") chunks
   pure $ results
 
-accumulate :: Semigroup a => Either a a -> Either a a -> Either a a
-accumulate (Right acc) (Right item) = Right (acc <> item)
-accumulate (Left acc) _             = Left acc
-accumulate _ (Left item)            = Left item
-
 -- todo: add error for parseModifiers?
 parseModifiers :: T.Text -> T.Text -> [Modifier]
 parseModifiers separator modifiersBlock =
@@ -141,11 +124,6 @@ getSourcesRecursive dir = do
            else fmap
                   (\other -> other <> map (\file -> SourceFile file) files)
                   (foldMap getSourcesRecursive subdirs)
-
-splitOnFilesAndDirs :: [FilePath] -> IO ([FilePath], [FilePath])
-splitOnFilesAndDirs paths = do
-  files <- filterM doesFileExist paths
-  pure (files, paths \\ files)
 
 toSourceAndContent :: [Source] -> IO [SourceAndContent]
 toSourceAndContent sources = traverse mapper sources

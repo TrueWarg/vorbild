@@ -27,11 +27,14 @@ module Vorbild
   , generateFromTemplates
   , getSourcesRecursive
   , toSourceAndContent
+  , getFiles
+  , splitOnFilesAndDirs
   ) where
 
-import           Vorbild.Source
+import           Vorbild.File
 import           Vorbild.Modifieble.Block
 import           Vorbild.Modifieble.Config
+import           Vorbild.Source
 import           Vorbild.TemplateValue.Config
 import           Vorbild.TemplateValue.Modifier
 import           Vorbild.TemplateValue.Parsing

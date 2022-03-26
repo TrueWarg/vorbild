@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Vorbild.Modifieble.Config
   ( ModifiebleFile(..)
@@ -7,14 +7,15 @@ module Vorbild.Modifieble.Config
   , readAndParseModifiebleConfigsFromJson
   ) where
 
-import qualified Data.Text    as T
+import qualified Data.Text      as T
 
-import           Data.Aeson   (FromJSON, ToJSON, eitherDecodeFileStrict)
+import           Data.Aeson     (FromJSON, ToJSON, eitherDecodeFileStrict)
 import           GHC.Generics
+import           Vorbild.Either (accumulateWithList)
 
 data ModifiebleFile =
   ModifiebleFile
-    { mfPath           :: FilePath
+    { mfPath         :: FilePath
     , rootDescriptor :: BlockDescriptorItem
     }
   deriving (Generic, Show)
@@ -25,7 +26,7 @@ instance ToJSON ModifiebleFile
 
 data BlockDescriptorItem =
   BlockDescriptorItem
-    { id        :: T.Text
+    { id         :: T.Text
     , bdStart    :: Maybe T.Text
     , bdEnd      :: Maybe T.Text
     , bdActions  :: [T.Text]
@@ -45,13 +46,16 @@ data ModifiebleParsingError =
   deriving (Show)
 
 readAndParseModifiebleConfigsFromJson ::
-     [FilePath] -> IO [Either ModifiebleParsingError ModifiebleFile]
-readAndParseModifiebleConfigsFromJson paths =
-  traverse
-    (\path -> do
-       result <-
-         eitherDecodeFileStrict path :: IO (Either String ModifiebleFile)
-       case result of
-         Left e       -> pure $ Left $ ModifiebleParsingError e path
-         Right result -> pure $ Right result)
-    paths
+     [FilePath] -> IO (Either ModifiebleParsingError [ModifiebleFile])
+readAndParseModifiebleConfigsFromJson = (fmap mapper) . parse
+  where
+    parse =
+      traverse
+        (\path -> do
+           result <-
+             eitherDecodeFileStrict path :: IO (Either String ModifiebleFile)
+           case result of
+             Left e       -> pure $ Left $ ModifiebleParsingError e path
+             Right result -> pure $ Right result)
+    mapper = foldl accumulateWithList (Right [])
+
