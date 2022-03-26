@@ -29,6 +29,8 @@ main = do
   templatesSourcePath <- correctDir $ templatePath </> templateSourceDir
   valueConfigItems <- tryReadAndParseConfigItemsFromJson valueConfigPath
   placeholderConfig <- tryReadPlaceholderConfigOrDefault templatePath
+  modifiebleFiles <- tryReadModifiebleConfigFilesOrEmpty $ templatePath </> modifiebleSourceDir
+  modifiebleConfigs <- tryReadAndParseModifiebleConfigsFromJson modifiebleFiles
   values <- tryPrepareAndParseValues placeholderConfig valueConfigItems
   putStrLn "Processing..."
   sources <- getSourcesRecursive templatesSourcePath >>= toSourceAndContent
@@ -41,6 +43,7 @@ main = do
           FileAndContent path content ->
             createAndWriteFile (replaceRoot' path) content
   _ <- traverse writeFiles generated
+  execModification modifiebleConfigs
   putStrLn "Done"
   pure ()
 
@@ -60,6 +63,10 @@ instance Format InTmpValueParsingError where
     "Unknow value with name: " <>
     valueName <> " in template path: " <> path
 
+instance Format ModifiebleParsingError where
+  format (ModifiebleParsingError cause srcPath) =
+    "File parsing error " <> srcPath <> ": " <> cause
+
 successOrPutError :: Format e => IO (Either e s) -> IO s
 successOrPutError action = do
   result <- action
@@ -78,6 +85,15 @@ tryReadAndParseConfigItemsFromJson =
 
 tryReadAndParsePlaceholderConfigFromJson =
   successOrPutError . readAndParsePlaceholderConfigFromJson
+
+tryReadAndParseModifiebleConfigsFromJson =
+  successOrPutError . readAndParseModifiebleConfigsFromJson
+
+tryReadModifiebleConfigFilesOrEmpty :: FilePath -> IO [FilePath]
+tryReadModifiebleConfigFilesOrEmpty dir = do
+  isExist <- doesDirectoryExist dir
+  files <- if (isExist) then getFiles dir else pure []
+  pure $ fmap (\item -> dir </> item) files
 
 correctDir :: FilePath -> IO FilePath
 correctDir path = do
@@ -115,11 +131,16 @@ tryReadPlaceholderConfigOrDefault templatePath = do
 replaceRoot :: FilePath -> FilePath -> FilePath -> FilePath
 replaceRoot root newRoot path = newRoot </> makeRelative root path
 
+execModification :: [ModifiebleFile] -> IO ()
+execModification configs = pure ()
+
 valueConfigName = "values.json"
 
 placeholderConfigName = "placeholder.json"
 
 templateSourceDir = "source"
+
+modifiebleSourceDir = "modifieble"
 
 defaultPlaceholderConfig =
   PlaceholderConfig

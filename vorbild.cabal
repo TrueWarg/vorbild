@@ -31,7 +31,9 @@ library
       Vorbild.TemplateValue.Modifier
       Vorbild.Modifieble.Block
       Vorbild.Modifieble.Config
+      Vorbild.File
       Vorbild.Text
+      Vorbild.Either
       Vorbild.Source
   hs-source-dirs:
       src

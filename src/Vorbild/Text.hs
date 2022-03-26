@@ -1,9 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Vorbild.Text
-  ( splitOnAnyOf
-  , breakOnThree
-  ) where
+module Vorbild.Text where
 
 import qualified Data.Text as T
 
@@ -14,7 +11,20 @@ splitOnAnyOf separators txt =
 data BreakOnThreeError
   = EmptyArg
   | Fail
+  deriving (Show, Eq)
 
+-- OK
+-- "aaaaaaaaSTARTaaaaaaaaENDaaa"
+-- "aaaaaaaaSTART", "aaaaaaaa", "ENDaaa"
+-- BAD
+-- "aaaaaaaaSTARTaaaaaaaaaaaaaa"
+-- "aaaaaaaaSTART", "", "aaaaaaaaaaaaaa"
+-- BAD
+-- "aaaaaaaaENDaaaaaaaaaaaaaa"
+-- "", "aaaaaaaa", "ENDaaaaaaaaaaaaaa"
+-- BAD
+-- "aaaaaaaaaaaaaaaaaaaaaaaaa"
+-- "", "aaaaaaaaaaaaaaaaaaaaaaaaa", "", "aaaaaaaaaaaaaaaaaaaaaaaaa"
 breakOnThree ::
      T.Text
   -> T.Text
@@ -26,18 +36,6 @@ breakOnThree start end txt =
   if (T.null beforeStartIncl || T.null afterStart)
     then Left Fail
     else Right (beforeStartIncl, body, afterEndIncl)
-    -- OK
-    -- "aaaaaaaaSTARTaaaaaaaaENDaaa"
-    -- "aaaaaaaaSTART", "aaaaaaaa", "ENDaaa"
-    -- BAD
-    -- "aaaaaaaaSTARTaaaaaaaaaaaaaa"
-    -- "aaaaaaaaSTART", "", "aaaaaaaaaaaaaa"
-    -- BAD
-    -- "aaaaaaaaENDaaaaaaaaaaaaaa"
-    -- "", "aaaaaaaa", "ENDaaaaaaaaaaaaaa"
-    -- BAD
-    -- "aaaaaaaaaaaaaaaaaaaaaaaaa"
-    -- "", "aaaaaaaaaaaaaaaaaaaaaaaaa", "", "aaaaaaaaaaaaaaaaaaaaaaaaa"
   where
     (beforeStartIncl, afterStart) = T.breakOnEnd start txt
     (body, afterEndIncl) = T.breakOn end afterStart
