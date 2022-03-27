@@ -27,8 +27,8 @@ instance ToJSON ModifiebleFile
 data BlockDescriptorItem =
   BlockDescriptorItem
     { id         :: T.Text
-    , bdStart    :: Maybe T.Text
-    , bdEnd      :: Maybe T.Text
+    , bdStart    :: T.Text
+    , bdEnd      :: T.Text
     , bdActions  :: [T.Text]
     , bdChildren :: [BlockDescriptorItem]
     }

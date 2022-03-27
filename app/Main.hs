@@ -29,7 +29,8 @@ main = do
   templatesSourcePath <- correctDir $ templatePath </> templateSourceDir
   valueConfigItems <- tryReadAndParseConfigItemsFromJson valueConfigPath
   placeholderConfig <- tryReadPlaceholderConfigOrDefault templatePath
-  modifiebleFiles <- tryReadModifiebleConfigFilesOrEmpty $ templatePath </> modifiebleSourceDir
+  modifiebleFiles <-
+    tryReadModifiebleConfigFilesOrEmpty $ templatePath </> modifiebleSourceDir
   modifiebleConfigs <- tryReadAndParseModifiebleConfigsFromJson modifiebleFiles
   values <- tryPrepareAndParseValues placeholderConfig valueConfigItems
   putStrLn "Processing..."
@@ -43,7 +44,7 @@ main = do
           FileAndContent path content ->
             createAndWriteFile (replaceRoot' path) content
   _ <- traverse writeFiles generated
-  execModification modifiebleConfigs
+  tryExecModifications modifiebleConfigs
   putStrLn "Done"
   pure ()
 
@@ -56,16 +57,21 @@ instance Format ConfigParsingError where
 
 instance Format ValueParsingError where
   format (UnkonwnName valueName) = "Unknow value with name: " <> valueName
-  format (CycleDeclaration valueName) = "Cycle declaration value with name: " <> valueName
+  format (CycleDeclaration valueName) =
+    "Cycle declaration value with name: " <> valueName
 
 instance Format InTmpValueParsingError where
   format (InTmpValueParsingError valueName path) =
-    "Unknow value with name: " <>
-    valueName <> " in template path: " <> path
+    "Unknow value with name: " <> valueName <> " in template path: " <> path
 
 instance Format ModifiebleParsingError where
   format (ModifiebleParsingError cause srcPath) =
     "File parsing error " <> srcPath <> ": " <> cause
+
+instance Format ModificationError where
+  format (FileNotFound path) = "File with path " <> path <> " not found"
+  format (ExecFail path descriptorId) =
+    "Apply modification failed in file " <> path <> " and block descriptor id " <> descriptorId
 
 successOrPutError :: Format e => IO (Either e s) -> IO s
 successOrPutError action = do
@@ -89,10 +95,15 @@ tryReadAndParsePlaceholderConfigFromJson =
 tryReadAndParseModifiebleConfigsFromJson =
   successOrPutError . readAndParseModifiebleConfigsFromJson
 
+tryExecModifications = successOrPutError . execModifications
+
 tryReadModifiebleConfigFilesOrEmpty :: FilePath -> IO [FilePath]
 tryReadModifiebleConfigFilesOrEmpty dir = do
   isExist <- doesDirectoryExist dir
-  files <- if (isExist) then getFiles dir else pure []
+  files <-
+    if (isExist)
+      then getFiles dir
+      else pure []
   pure $ fmap (\item -> dir </> item) files
 
 correctDir :: FilePath -> IO FilePath
@@ -130,9 +141,6 @@ tryReadPlaceholderConfigOrDefault templatePath = do
 
 replaceRoot :: FilePath -> FilePath -> FilePath -> FilePath
 replaceRoot root newRoot path = newRoot </> makeRelative root path
-
-execModification :: [ModifiebleFile] -> IO ()
-execModification configs = pure ()
 
 valueConfigName = "values.json"
 

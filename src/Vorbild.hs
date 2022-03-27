@@ -17,6 +17,7 @@ module Vorbild
   , Descriptor(..)
   , DescriptorId(..)
   , Action(..)
+  , ModificationError(..)
   , modify
   , readAndParseModifiebleConfigsFromJson
   , readAndParseConfigItemsFromJson
@@ -29,11 +30,13 @@ module Vorbild
   , toSourceAndContent
   , getFiles
   , splitOnFilesAndDirs
+  , execModifications
   ) where
 
 import           Vorbild.File
 import           Vorbild.Modifieble.Block
 import           Vorbild.Modifieble.Config
+import           Vorbild.Modifieble.Exec
 import           Vorbild.Source
 import           Vorbild.TemplateValue.Config
 import           Vorbild.TemplateValue.Modifier
