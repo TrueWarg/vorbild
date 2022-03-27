@@ -14,7 +14,7 @@ parse = execParser opts
       info
         (helper <*> optionParser)
         (fullDesc <>
-         header "VorbilD" <> progDesc "Generate files from specified templates")
+         header "Vorbild" <> progDesc "Generate files from specified templates")
 
 optionParser :: Parser Option
 optionParser = Option <$> templatePathParser <*> destinationParser
