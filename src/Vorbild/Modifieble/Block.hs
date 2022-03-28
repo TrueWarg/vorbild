@@ -7,8 +7,8 @@ module Vorbild.Modifieble.Block
  , modify
  ) where
 
-import           Data.List    (sort, sortBy)
-import qualified Data.Text    as T
+import           Data.List    (sort, sortBy, intersperse)
+import qualified Data.Text    as T(concat, lines, Text)
 import           Vorbild.Text (breakOnThree)
 
 data Descriptor =
@@ -53,8 +53,8 @@ applyAction block action =
   case action of
     (Append other)  -> block <> other
     (Prepend other) -> other <> block
-    SortLines       -> T.concat $ sort $ T.lines block
-    SortLinesDesc   -> T.concat $ sortBy (flip compare) $ T.lines block
+    SortLines       -> (T.concat $ intersperse "\n" $ sort $ T.lines block)
+    SortLinesDesc   -> (T.concat $ intersperse "\n" $ sortBy (flip compare) $ T.lines block)
 
 applyActionList :: T.Text -> [Action] -> T.Text
 applyActionList block [] = block

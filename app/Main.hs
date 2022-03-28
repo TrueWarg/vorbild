@@ -44,7 +44,7 @@ main = do
           FileAndContent path content ->
             createAndWriteFile (replaceRoot' path) content
   _ <- traverse writeFiles generated
-  tryExecModifications modifiebleConfigs
+  tryExecModifications values placeholderConfig modifiebleConfigs
   putStrLn "Done"
   pure ()
 
@@ -71,7 +71,14 @@ instance Format ModifiebleParsingError where
 instance Format ModificationError where
   format (FileNotFound path) = "File with path " <> path <> " not found"
   format (ExecFail path descriptorId) =
-    "Apply modification failed in file " <> path <> " and block descriptor id " <> descriptorId
+    "Apply modification failed in file " <>
+    path <> " and block descriptor id " <> descriptorId
+  format (SegmentParsingError name descriptorId) =
+    "Unkown template value name " <>
+    name <> " in descriptor id " <> descriptorId
+  format (ActionParsingError name descriptorId) =
+    "Unkown action name " <>
+    name <> " in descriptor id " <> descriptorId
 
 successOrPutError :: Format e => IO (Either e s) -> IO s
 successOrPutError action = do
@@ -95,16 +102,15 @@ tryReadAndParsePlaceholderConfigFromJson =
 tryReadAndParseModifiebleConfigsFromJson =
   successOrPutError . readAndParseModifiebleConfigsFromJson
 
-tryExecModifications = successOrPutError . execModifications
+tryExecModifications values placeholderConfig =
+  successOrPutError . execModifications values placeholderConfig
 
 tryReadModifiebleConfigFilesOrEmpty :: FilePath -> IO [FilePath]
 tryReadModifiebleConfigFilesOrEmpty dir = do
   isExist <- doesDirectoryExist dir
-  files <-
-    if (isExist)
-      then getFiles dir
-      else pure []
-  pure $ fmap (\item -> dir </> item) files
+  if (isExist)
+    then getFiles dir
+    else pure []
 
 correctDir :: FilePath -> IO FilePath
 correctDir path = do

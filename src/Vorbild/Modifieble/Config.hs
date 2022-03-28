@@ -15,7 +15,7 @@ import           Vorbild.Either (accumulateWithList)
 
 data ModifiebleFile =
   ModifiebleFile
-    { mfPath         :: FilePath
+    { filePath         :: FilePath
     , rootDescriptor :: BlockDescriptorItem
     }
   deriving (Generic, Show)
@@ -27,10 +27,10 @@ instance ToJSON ModifiebleFile
 data BlockDescriptorItem =
   BlockDescriptorItem
     { id         :: T.Text
-    , bdStart    :: T.Text
-    , bdEnd      :: T.Text
-    , bdActions  :: [T.Text]
-    , bdChildren :: [BlockDescriptorItem]
+    , start    :: T.Text
+    , end      :: T.Text
+    , actions  :: [T.Text]
+    , children :: [BlockDescriptorItem]
     }
   deriving (Generic, Show)
 
