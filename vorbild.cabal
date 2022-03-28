@@ -29,6 +29,7 @@ library
       Vorbild.TemplateValue.Segment
       Vorbild.TemplateValue.Parsing
       Vorbild.TemplateValue.Modifier
+      Vorbild.TemplateValue.Placement
       Vorbild.Modifieble.Block
       Vorbild.Modifieble.Config
       Vorbild.Modifieble.Exec
