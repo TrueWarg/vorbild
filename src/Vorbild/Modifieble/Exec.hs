@@ -12,9 +12,8 @@ import qualified Data.Text                       as T
 import qualified Data.Text.IO                    as TIO
 import           System.Directory                (doesFileExist)
 import           Vorbild.Either                  (accumulate,
-                                                  rightAccumulateWithList,
-                                                  eitherZipWith,
-                                                  eitherZipWith4)
+                                                  eitherZipWith3,
+                                                  rightAccumulateWithList)
 import qualified Vorbild.Modifieble.Block        as Block
 import qualified Vorbild.Modifieble.Config       as Config
 import           Vorbild.TemplateValue.Config    (PlaceholderConfig (..))
@@ -44,63 +43,55 @@ execModifications values placeholderConfig = (fmap mapper) . exec
       traverse
         (\config -> do
            let path = Config.filePath config
-               rootDescriptor = Config.rootDescriptor config
+               descriptors = Config.blockDescriptors config
                valuesAndConfig = ValuesAndConfig values placeholderConfig
            isExist <- doesFileExist path
            if (not isExist)
              then pure (Left $ FileNotFound path)
-             else execModificationIntenal valuesAndConfig path rootDescriptor)
-    mapper = foldl accumulate (Right ())
+             else execModificationIntenal valuesAndConfig path descriptors)
+    mapper = foldr accumulate (Right ())
 
 execModificationIntenal ::
      ValuesAndConfig
   -> FilePath
-  -> Config.BlockDescriptorItem
+  -> [Config.BlockDescriptorItem]
   -> IO (Either ModificationError ())
-execModificationIntenal config path descriptorConfig = do
+execModificationIntenal config path descriptorConfigs = do
   content <- TIO.readFile path
-  let mapResult = runReader (mapConfigToBlock descriptorConfig) config
+  let mapResult = runReader (mapConfigToBlockList descriptorConfigs) config
       modifyResult =
-        fmap (\descriptor -> Block.modify content (descriptor : [])) mapResult
+        fmap (\descriptors -> Block.modify content (descriptors)) mapResult
   case modifyResult of
     Left err -> pure $ Left err
     Right modified -> do
       TIO.writeFile path modified
       pure $ Right ()
 
+mapConfigToBlockList ::
+     [Config.BlockDescriptorItem]
+  -> Reader ValuesAndConfig (Either ModificationError [Block.Descriptor])
+mapConfigToBlockList = (fmap foldr') . traverse mapConfigToBlock
+  where
+    foldr' = foldr rightAccumulateWithList (Right [])
+
 mapConfigToBlock ::
      Config.BlockDescriptorItem
   -> Reader ValuesAndConfig (Either ModificationError Block.Descriptor)
-mapConfigToBlock (Config.BlockDescriptorItem id start end actions сhildren) = do
+mapConfigToBlock (Config.BlockDescriptorItem id start end actions) = do
   let wrapInParsingError configId =
         Bif.first
           (\err -> SegmentParsingError (T.unpack configId) (T.unpack err))
   startResult <- fmap (wrapInParsingError id) (placeTemplateValues start)
   endResult <- fmap (wrapInParsingError id) (placeTemplateValues end)
   actionsResult <- fmap (mapActionError id) (mapActions actions)
-  childrenResult <- mapConfigToBlockList сhildren
   let result =
-        eitherZipWith4
-          (\start end actions children ->
-             Block.Descriptor (Block.DescriptorId id) start end actions children)
+        eitherZipWith3
+          (\start end actions ->
+             Block.Descriptor (Block.DescriptorId id) start end actions)
           startResult
           endResult
           actionsResult
-          childrenResult
   pure result
-
-mapConfigToBlockList ::
-     [Config.BlockDescriptorItem]
-  -> Reader ValuesAndConfig (Either ModificationError [Block.Descriptor])
-mapConfigToBlockList [] = pure $ Right []
-mapConfigToBlockList (config:configs) = do
-  configMapResult <- mapConfigToBlock config
-  remainingMapResult <- mapConfigToBlockList configs
-  pure $
-    eitherZipWith
-      (\descriptor other -> descriptor : other)
-      configMapResult
-      remainingMapResult
 
 mapActions ::
      [T.Text] -> Reader ValuesAndConfig (Either ActionError [Block.Action])

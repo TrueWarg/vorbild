@@ -11,12 +11,12 @@ import qualified Data.Text      as T
 
 import           Data.Aeson     (FromJSON, ToJSON, eitherDecodeFileStrict)
 import           GHC.Generics
-import           Vorbild.Either (accumulateWithList)
+import           Vorbild.Either (rightAccumulateWithList)
 
 data ModifiebleFile =
   ModifiebleFile
     { filePath         :: FilePath
-    , rootDescriptor :: BlockDescriptorItem
+    , blockDescriptors :: [BlockDescriptorItem]
     }
   deriving (Generic, Show)
 
@@ -30,7 +30,6 @@ data BlockDescriptorItem =
     , start    :: T.Text
     , end      :: T.Text
     , actions  :: [T.Text]
-    , children :: [BlockDescriptorItem]
     }
   deriving (Generic, Show)
 
@@ -57,5 +56,5 @@ readAndParseModifiebleConfigsFromJson = (fmap mapper) . parse
            case result of
              Left e       -> pure $ Left $ ModifiebleParsingError e path
              Right result -> pure $ Right result)
-    mapper = foldl accumulateWithList (Right [])
+    mapper = foldr rightAccumulateWithList (Right [])
 

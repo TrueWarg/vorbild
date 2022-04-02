@@ -33,9 +33,11 @@ breakOnThree ::
 breakOnThree "" _ _ = Left EmptyArg
 breakOnThree _ "" _ = Left EmptyArg
 breakOnThree start end txt =
-  if (T.null beforeStartIncl || T.null afterStart)
+  if (T.null beforeStartIncl || T.null afterStart || T.null afterEndIncl)
     then Left Fail
     else Right (beforeStartIncl, body, afterEndIncl)
   where
-    (beforeStartIncl, afterStart) = T.breakOnEnd start txt
+    (beforeStart, afterStartIncl) = T.breakOn start txt
+    beforeStartIncl = beforeStart <> start
+    afterStart = T.drop (T.length start) afterStartIncl
     (body, afterEndIncl) = T.breakOn end afterStart
