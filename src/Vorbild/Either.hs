@@ -11,6 +11,16 @@ isRight mea =
     Right _ -> True
     _       -> False
 
+eitherZipWith3 ::
+     (a -> b -> c -> d)
+  -> Either e a
+  -> Either e b
+  -> Either e c
+  -> Either e d
+eitherZipWith3 f ea eb ec =
+  let abRes = eitherZipWith (\a b -> (a, b)) ea eb
+   in eitherZipWith (\(a, b) c -> f a b c) abRes ec
+
 eitherZipWith4 ::
      (a -> b -> c -> d -> f)
   -> Either e a

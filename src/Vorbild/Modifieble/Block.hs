@@ -17,7 +17,6 @@ data Descriptor =
     , dStart    :: T.Text
     , dEnd      :: T.Text
     , dActions  :: [Action]
-    , dChildren :: [Descriptor]
     }
   deriving (Show, Eq)
 
@@ -35,7 +34,7 @@ data Action
 modify :: T.Text -> [Descriptor] -> T.Text
 modify text [] = text
 modify text (descriptor:descriptors) =
-  modifySingle (modify text (dChildren descriptor <> descriptors)) descriptor
+  modifySingle (modify text descriptors) descriptor
 
 modifySingle :: T.Text -> Descriptor -> T.Text
 modifySingle text descriptor =
