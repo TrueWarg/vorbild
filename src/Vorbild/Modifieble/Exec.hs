@@ -11,8 +11,7 @@ import qualified Data.Map.Strict                 as Map
 import qualified Data.Text                       as T
 import qualified Data.Text.IO                    as TIO
 import           System.Directory                (doesFileExist)
-import           Vorbild.Either                  (accumulate,
-                                                  eitherZipWith3,
+import           Vorbild.Either                  (accumulate, eitherZipWith3,
                                                   rightAccumulateWithList)
 import qualified Vorbild.Modifieble.Block        as Block
 import qualified Vorbild.Modifieble.Config       as Config
@@ -21,7 +20,8 @@ import           Vorbild.TemplateValue.Placement
 import           Vorbild.TemplateValue.Segment
 
 data ModificationError
-  = FileNotFound String
+  = FileNotFound FilePath
+  | FileSegmentParsingError FilePath String
   | ExecFail String String
   | SegmentParsingError String String
   | ActionParsingError String String
@@ -42,13 +42,17 @@ execModifications values placeholderConfig = (fmap mapper) . exec
     exec =
       traverse
         (\config -> do
-           let path = Config.filePath config
+           let valuesAndConfig = ValuesAndConfig values placeholderConfig
+               pathResult =
+                 placePathTemplate valuesAndConfig (Config.filePath config)
                descriptors = Config.blockDescriptors config
-               valuesAndConfig = ValuesAndConfig values placeholderConfig
-           isExist <- doesFileExist path
-           if (not isExist)
-             then pure (Left $ FileNotFound path)
-             else execModificationIntenal valuesAndConfig path descriptors)
+           case pathResult of
+             Left e -> pure $ Left e
+             Right path -> do
+               isExist <- doesFileExist path
+               if (not isExist)
+                 then pure (Left $ FileNotFound path)
+                 else execModificationIntenal valuesAndConfig path descriptors)
     mapper = foldr accumulate (Right ())
 
 execModificationIntenal ::
@@ -66,6 +70,17 @@ execModificationIntenal config path descriptorConfigs = do
     Right modified -> do
       TIO.writeFile path modified
       pure $ Right ()
+
+placePathTemplate ::
+     ValuesAndConfig -> FilePath -> Either ModificationError FilePath
+placePathTemplate config path =
+  let wrapInParsingError path =
+        Bif.first (\err -> FileSegmentParsingError path (T.unpack err))
+      placeResult =
+        wrapInParsingError
+          path
+          (runReader (placeTemplateValues (T.pack path)) config)
+   in fmap (\packed -> T.unpack packed) placeResult
 
 mapConfigToBlockList ::
      [Config.BlockDescriptorItem]

@@ -79,6 +79,9 @@ instance Format ModificationError where
   format (ActionParsingError name descriptorId) =
     "Unkown action name " <>
     name <> " in descriptor id " <> descriptorId
+  format (FileSegmentParsingError path name) = 
+    "Unkown template value name " <>
+    name <> " in file path " <> path
 
 successOrPutError :: Format e => IO (Either e s) -> IO s
 successOrPutError action = do
