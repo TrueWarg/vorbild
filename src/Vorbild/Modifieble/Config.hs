@@ -4,6 +4,7 @@ module Vorbild.Modifieble.Config
   ( ModifiebleFile(..)
   , BlockDescriptorItem(..)
   , ModifiebleParsingError(..)
+  , BlockEdges(..)
   , readAndParseModifiebleConfigsFromJson
   ) where
 
@@ -26,16 +27,26 @@ instance ToJSON ModifiebleFile
 
 data BlockDescriptorItem =
   BlockDescriptorItem
-    { id         :: T.Text
-    , start    :: T.Text
-    , end      :: T.Text
-    , actions  :: [T.Text]
+    { id      :: T.Text
+    , edges  :: Maybe BlockEdges
+    , actions :: [T.Text]
     }
   deriving (Generic, Show)
 
 instance FromJSON BlockDescriptorItem
 
 instance ToJSON BlockDescriptorItem
+
+data BlockEdges =
+  BlockEdges
+    { start :: T.Text
+    , end   :: T.Text
+    }
+  deriving (Generic, Show)
+
+instance FromJSON BlockEdges
+
+instance ToJSON BlockEdges
 
 data ModifiebleParsingError =
   ModifiebleParsingError
@@ -57,4 +68,3 @@ readAndParseModifiebleConfigsFromJson = (fmap mapper) . parse
              Left e       -> pure $ Left $ ModifiebleParsingError e path
              Right result -> pure $ Right result)
     mapper = foldr rightAccumulateWithList (Right [])
-

@@ -11,7 +11,7 @@ import qualified Data.Map.Strict                 as Map
 import qualified Data.Text                       as T
 import qualified Data.Text.IO                    as TIO
 import           System.Directory                (doesFileExist)
-import           Vorbild.Either                  (accumulate, eitherZipWith3,
+import           Vorbild.Either                  (accumulate, eitherZipWith,
                                                   rightAccumulateWithList)
 import qualified Vorbild.Modifieble.Block        as Block
 import qualified Vorbild.Modifieble.Config       as Config
@@ -92,19 +92,14 @@ mapConfigToBlockList = (fmap foldr') . traverse mapConfigToBlock
 mapConfigToBlock ::
      Config.BlockDescriptorItem
   -> Reader ValuesAndConfig (Either ModificationError Block.Descriptor)
-mapConfigToBlock (Config.BlockDescriptorItem id start end actions) = do
-  let wrapInParsingError configId =
-        Bif.first
-          (\err -> SegmentParsingError (T.unpack configId) (T.unpack err))
-  startResult <- fmap (wrapInParsingError id) (placeTemplateValues start)
-  endResult <- fmap (wrapInParsingError id) (placeTemplateValues end)
+mapConfigToBlock (Config.BlockDescriptorItem id edges actions) = do
+  edgesResult <- mapEdges id edges
   actionsResult <- fmap (mapActionError id) (mapActions actions)
   let result =
-        eitherZipWith3
-          (\start end actions ->
-             Block.Descriptor (Block.DescriptorId id) start end actions)
-          startResult
-          endResult
+        eitherZipWith
+          (\edges actions ->
+             Block.Descriptor (Block.DescriptorId id) edges actions)
+          edgesResult
           actionsResult
   pure result
 
@@ -151,3 +146,23 @@ parseReplaceArg arg
   | T.head arg == '\'' && T.last arg == '\'' =
     T.dropAround (\ch -> ch == '\'') arg
   | otherwise = arg
+
+mapEdges ::
+     T.Text
+  -> Maybe Config.BlockEdges
+  -> Reader ValuesAndConfig (Either ModificationError (Maybe Block.Edges))
+mapEdges configId mtext =
+  case mtext of
+    Nothing -> pure $ Right Nothing
+    Just (Config.BlockEdges start end) -> do
+      let wrapInParsingError =
+            Bif.first
+              (\err -> SegmentParsingError (T.unpack configId) (T.unpack err))
+      startResult <- fmap (wrapInParsingError) (placeTemplateValues start)
+      endResult <- fmap (wrapInParsingError) (placeTemplateValues end)
+      let result =
+            eitherZipWith
+              (\start end -> Just (Block.Edges start end))
+              startResult
+              endResult
+      pure $ result
