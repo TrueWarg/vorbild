@@ -70,18 +70,18 @@ instance Format ModifiebleParsingError where
 
 instance Format ModificationError where
   format (FileNotFound path) = "File with path " <> path <> " not found"
-  format (ExecFail path descriptorId) =
-    "Apply modification failed in file " <>
-    path <> " and block descriptor id " <> descriptorId
-  format (SegmentParsingError name descriptorId) =
-    "Unkown template value name " <>
-    name <> " in descriptor id " <> descriptorId
-  format (ActionParsingError name descriptorId) =
-    "Unkown action name " <>
-    name <> " in descriptor id " <> descriptorId
+  format (SegmentParsingError blockLabel valueName) =
+    "Unkown template value name " <> valueName <> labelAppendix blockLabel
+  format (ActionParsingError blockLabel actionName) =
+    "Unkown action name " <> actionName <> labelAppendix blockLabel
   format (FileSegmentParsingError path name) = 
     "Unkown template value name " <>
     name <> " in file path " <> path
+
+labelAppendix blockLabel = 
+  case blockLabel of
+    Nothing -> ""
+    Just label -> " in " <> label <> " descriptor"
 
 successOrPutError :: Format e => IO (Either e s) -> IO s
 successOrPutError action = do

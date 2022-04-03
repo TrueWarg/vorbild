@@ -41,3 +41,9 @@ breakOnThree start end txt =
     beforeStartIncl = beforeStart <> start
     afterStart = T.drop (T.length start) afterStartIncl
     (body, afterEndIncl) = T.breakOn end afterStart
+
+-- todo find default function or impl correclty
+isSubText :: T.Text -> T.Text -> Bool
+isSubText query txt =
+  let (_, after) = T.breakOn query txt
+   in not $ T.null after

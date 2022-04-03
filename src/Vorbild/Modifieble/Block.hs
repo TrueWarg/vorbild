@@ -2,7 +2,6 @@
 
 module Vorbild.Modifieble.Block
   ( Descriptor(..)
-  , DescriptorId(..)
   , Action(..)
   , Edges(..)
   , modify
@@ -10,11 +9,11 @@ module Vorbild.Modifieble.Block
 
 import           Data.List    (intersperse, sort, sortBy)
 import qualified Data.Text    as T (Text, concat, lines)
-import           Vorbild.Text (breakOnThree)
+import           Vorbild.Text (breakOnThree, isSubText)
 
 data Descriptor =
   Descriptor
-    { dId      :: DescriptorId
+    { dLabel   :: Maybe String
     , dEdges   :: Maybe Edges
     , dActions :: [Action]
     }
@@ -24,13 +23,11 @@ data Edges =
   Edges T.Text T.Text
   deriving (Show, Eq)
 
-newtype DescriptorId =
-  DescriptorId T.Text
-  deriving (Show, Eq)
-
 data Action
   = Append T.Text
   | Prepend T.Text
+  | AppendOnce T.Text
+  | PrependOnce T.Text
   | SortLines
   | SortLinesDesc
   deriving (Show, Eq)
@@ -38,7 +35,7 @@ data Action
 modify :: T.Text -> [Descriptor] -> T.Text
 modify text [] = text
 modify text (descriptor:descriptors) =
-  modifySingle (modify text descriptors) descriptor
+  modify (modifySingle text descriptor) descriptors
 
 modifySingle :: T.Text -> Descriptor -> T.Text
 modifySingle text descriptor =
@@ -50,14 +47,22 @@ modifySingle text descriptor =
           Right (beforeStartIncl, body, afterEndIncl) ->
             beforeStartIncl <> applyActionList body actions <> afterEndIncl
    in case edges of
-     Nothing -> applyActionList text actions
-     Just (Edges start end) -> breakOnThree' start end text
+        Nothing                -> applyActionList text actions
+        Just (Edges start end) -> breakOnThree' start end text
 
 applyAction :: T.Text -> Action -> T.Text
 applyAction block action =
   case action of
     (Append other) -> block <> other
     (Prepend other) -> other <> block
+    (AppendOnce other) ->
+      if (isSubText other block)
+        then block
+        else block <> other
+    (PrependOnce other) ->
+      if (isSubText other block)
+        then block
+        else other <> block
     SortLines -> (T.concat $ intersperse "\n" $ sort $ T.lines block)
     SortLinesDesc ->
       (T.concat $ intersperse "\n" $ sortBy (flip compare) $ T.lines block)

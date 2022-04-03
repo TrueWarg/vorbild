@@ -22,9 +22,8 @@ import           Vorbild.TemplateValue.Segment
 data ModificationError
   = FileNotFound FilePath
   | FileSegmentParsingError FilePath String
-  | ExecFail String String
-  | SegmentParsingError String String
-  | ActionParsingError String String
+  | SegmentParsingError (Maybe String) String
+  | ActionParsingError (Maybe String) String
   deriving (Show, Eq)
 
 data ActionError
@@ -92,13 +91,13 @@ mapConfigToBlockList = (fmap foldr') . traverse mapConfigToBlock
 mapConfigToBlock ::
      Config.BlockDescriptorItem
   -> Reader ValuesAndConfig (Either ModificationError Block.Descriptor)
-mapConfigToBlock (Config.BlockDescriptorItem id edges actions) = do
-  edgesResult <- mapEdges id edges
-  actionsResult <- fmap (mapActionError id) (mapActions actions)
+mapConfigToBlock (Config.BlockDescriptorItem label edges actions) = do
+  edgesResult <- mapEdges label edges
+  actionsResult <- fmap (mapActionError label) (mapActions actions)
   let result =
         eitherZipWith
           (\edges actions ->
-             Block.Descriptor (Block.DescriptorId id) edges actions)
+             Block.Descriptor label edges actions)
           edgesResult
           actionsResult
   pure result
@@ -115,6 +114,8 @@ mapAction code = do
       mapper name arg
         | name == "append" = Right $ Block.Append arg
         | name == "prepend" = Right $ Block.Prepend arg
+        | name == "appendOnce" = Right $ Block.AppendOnce arg
+        | name == "prependOnce" = Right $ Block.PrependOnce arg
         | name == "sortLines" = Right Block.SortLines
         | name == "sortLinesDesc" = Right Block.SortLinesDesc
         | otherwise = Left $ NameParsingError $ T.unpack name
@@ -123,15 +124,15 @@ mapAction code = do
   pure $ (argResult >>= (mapper name))
 
 mapActionError ::
-     T.Text
+     Maybe String
   -> (Either ActionError [Block.Action])
   -> (Either ModificationError [Block.Action])
-mapActionError configId actions = Bif.first (mapper $ T.unpack configId) actions
+mapActionError label actions = Bif.first (mapper label) actions
   where
-    mapper configId error =
+    mapper label error =
       case error of
-        (ArgParsingError value)  -> SegmentParsingError configId value
-        (NameParsingError value) -> ActionParsingError configId value
+        (ArgParsingError value)  -> SegmentParsingError label value
+        (NameParsingError value) -> ActionParsingError label value
 
 actionNameAndArg :: T.Text -> (T.Text, T.Text)
 actionNameAndArg action =
@@ -148,16 +149,16 @@ parseReplaceArg arg
   | otherwise = arg
 
 mapEdges ::
-     T.Text
+     Maybe String
   -> Maybe Config.BlockEdges
   -> Reader ValuesAndConfig (Either ModificationError (Maybe Block.Edges))
-mapEdges configId mtext =
+mapEdges label mtext =
   case mtext of
     Nothing -> pure $ Right Nothing
     Just (Config.BlockEdges start end) -> do
       let wrapInParsingError =
             Bif.first
-              (\err -> SegmentParsingError (T.unpack configId) (T.unpack err))
+              (\err -> SegmentParsingError label (T.unpack err))
       startResult <- fmap (wrapInParsingError) (placeTemplateValues start)
       endResult <- fmap (wrapInParsingError) (placeTemplateValues end)
       let result =

@@ -15,7 +15,6 @@ module Vorbild
   , BlockDescriptorItem(..)
   , ModifiebleParsingError(..)
   , Descriptor(..)
-  , DescriptorId(..)
   , Action(..)
   , ModificationError(..)
   , modify

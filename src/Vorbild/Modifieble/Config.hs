@@ -27,8 +27,8 @@ instance ToJSON ModifiebleFile
 
 data BlockDescriptorItem =
   BlockDescriptorItem
-    { id      :: T.Text
-    , edges  :: Maybe BlockEdges
+    { blockLabel   :: Maybe String
+    , edges   :: Maybe BlockEdges
     , actions :: [T.Text]
     }
   deriving (Generic, Show)
