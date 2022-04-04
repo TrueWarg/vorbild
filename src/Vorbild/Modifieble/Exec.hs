@@ -1,164 +1,91 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Vorbild.Modifieble.Exec
   ( execModifications
-  , ModificationError(..)
+  , SegmentParsingError(..)
   ) where
 
 import           Control.Monad.Reader            (Reader, runReader)
 import qualified Data.Bifunctor                  as Bif (first)
-import qualified Data.Map.Strict                 as Map
 import qualified Data.Text                       as T
-import qualified Data.Text.IO                    as TIO
-import           System.Directory                (doesFileExist)
-import           Vorbild.Either                  (accumulate, eitherZipWith,
+import           Vorbild.Either                  (eitherZipWith,
                                                   rightAccumulateWithList)
 import qualified Vorbild.Modifieble.Block        as Block
-import qualified Vorbild.Modifieble.Config       as Config
-import           Vorbild.TemplateValue.Config    (PlaceholderConfig (..))
 import           Vorbild.TemplateValue.Placement
-import           Vorbild.TemplateValue.Segment
 
-data ModificationError
-  = FileNotFound FilePath
-  | FileSegmentParsingError FilePath String
-  | SegmentParsingError (Maybe String) String
-  | ActionParsingError (Maybe String) String
-  deriving (Show, Eq)
-
-data ActionError
-  = ArgParsingError String
-  | NameParsingError String
+data SegmentParsingError =
+  SegmentParsingError (Maybe String) String
   deriving (Show, Eq)
 
 execModifications ::
-     Map.Map TemplateValueId [TemplateValueSegment]
-  -> PlaceholderConfig
-  -> [Config.ModifiebleFile]
-  -> IO (Either ModificationError ())
-execModifications values placeholderConfig = (fmap mapper) . exec
-  where
-    exec =
-      traverse
-        (\config -> do
-           let valuesAndConfig = ValuesAndConfig values placeholderConfig
-               pathResult =
-                 placePathTemplate valuesAndConfig (Config.filePath config)
-               descriptors = Config.blockDescriptors config
-           case pathResult of
-             Left e -> pure $ Left e
-             Right path -> do
-               isExist <- doesFileExist path
-               if (not isExist)
-                 then pure (Left $ FileNotFound path)
-                 else execModificationIntenal valuesAndConfig path descriptors)
-    mapper = foldr accumulate (Right ())
-
-execModificationIntenal ::
      ValuesAndConfig
-  -> FilePath
-  -> [Config.BlockDescriptorItem]
-  -> IO (Either ModificationError ())
-execModificationIntenal config path descriptorConfigs = do
-  content <- TIO.readFile path
-  let mapResult = runReader (mapConfigToBlockList descriptorConfigs) config
+  -> T.Text
+  -> [Block.Descriptor]
+  -> Either SegmentParsingError T.Text
+execModifications valuesAndConfig text descriptorConfigs =
+  let placeResult =
+        runReader (placeValuesToBlockList descriptorConfigs) valuesAndConfig
       modifyResult =
-        fmap (\descriptors -> Block.modify content (descriptors)) mapResult
-  case modifyResult of
-    Left err -> pure $ Left err
-    Right modified -> do
-      TIO.writeFile path modified
-      pure $ Right ()
+        fmap (\descriptors -> Block.modify text (descriptors)) placeResult
+   in modifyResult
 
-placePathTemplate ::
-     ValuesAndConfig -> FilePath -> Either ModificationError FilePath
-placePathTemplate config path =
-  let wrapInParsingError path =
-        Bif.first (\err -> FileSegmentParsingError path (T.unpack err))
-      placeResult =
-        wrapInParsingError
-          path
-          (runReader (placeTemplateValues (T.pack path)) config)
-   in fmap (\packed -> T.unpack packed) placeResult
-
-mapConfigToBlockList ::
-     [Config.BlockDescriptorItem]
-  -> Reader ValuesAndConfig (Either ModificationError [Block.Descriptor])
-mapConfigToBlockList = (fmap foldr') . traverse mapConfigToBlock
+placeValuesToBlockList ::
+     [Block.Descriptor]
+  -> Reader ValuesAndConfig (Either SegmentParsingError [Block.Descriptor])
+placeValuesToBlockList = (fmap foldr') . traverse placeValuesToBlock
   where
     foldr' = foldr rightAccumulateWithList (Right [])
 
-mapConfigToBlock ::
-     Config.BlockDescriptorItem
-  -> Reader ValuesAndConfig (Either ModificationError Block.Descriptor)
-mapConfigToBlock (Config.BlockDescriptorItem label edges actions) = do
-  edgesResult <- mapEdges label edges
-  actionsResult <- fmap (mapActionError label) (mapActions actions)
+placeValuesToBlock ::
+     Block.Descriptor
+  -> Reader ValuesAndConfig (Either SegmentParsingError Block.Descriptor)
+placeValuesToBlock (Block.Descriptor label edges actions) = do
+  edgesResult <- placeValuesToEdges label edges
+  actionsResult <- fmap (mapActionError label) (placeValuesToActions actions)
   let result =
         eitherZipWith
-          (\edges actions ->
-             Block.Descriptor label edges actions)
+          (\edges actions -> Block.Descriptor label edges actions)
           edgesResult
           actionsResult
   pure result
 
-mapActions ::
-     [T.Text] -> Reader ValuesAndConfig (Either ActionError [Block.Action])
-mapActions = (fmap foldr') . traverse mapAction
+placeValuesToActions ::
+     [Block.Action] -> Reader ValuesAndConfig (Either T.Text [Block.Action])
+placeValuesToActions = (fmap foldr') . traverse placeValuesToAction
   where
     foldr' = foldr rightAccumulateWithList (Right [])
 
-mapAction :: T.Text -> Reader ValuesAndConfig (Either ActionError Block.Action)
-mapAction code = do
-  let (name, arg) = actionNameAndArg code
-      mapper name arg
-        | name == "append" = Right $ Block.Append arg
-        | name == "prepend" = Right $ Block.Prepend arg
-        | name == "appendOnce" = Right $ Block.AppendOnce arg
-        | name == "prependOnce" = Right $ Block.PrependOnce arg
-        | name == "sortLines" = Right Block.SortLines
-        | name == "sortLinesDesc" = Right Block.SortLinesDesc
-        | otherwise = Left $ NameParsingError $ T.unpack name
-      errorMapper = Bif.first (\err -> ArgParsingError $ T.unpack err)
-  argResult <- fmap errorMapper (placeTemplateValues arg)
-  pure $ (argResult >>= (mapper name))
+placeValuesToAction ::
+     Block.Action -> Reader ValuesAndConfig (Either T.Text Block.Action)
+placeValuesToAction action =
+  case action of
+    Block.Append arg ->
+      placeTemplateValues arg >>= (\res -> pure $ fmap (Block.Append) res)
+    Block.Prepend arg ->
+      placeTemplateValues arg >>= (\res -> pure $ fmap (Block.Prepend) res)
+    Block.AppendOnce arg ->
+      placeTemplateValues arg >>= (\res -> pure $ fmap (Block.AppendOnce) res)
+    Block.PrependOnce arg ->
+      placeTemplateValues arg >>= (\res -> pure $ fmap (Block.PrependOnce) res)
+    Block.SortLines -> pure $ Right Block.SortLines
+    Block.SortLinesDesc -> pure $ Right Block.SortLinesDesc
 
 mapActionError ::
      Maybe String
-  -> (Either ActionError [Block.Action])
-  -> (Either ModificationError [Block.Action])
+  -> (Either T.Text [Block.Action])
+  -> (Either SegmentParsingError [Block.Action])
 mapActionError label actions = Bif.first (mapper label) actions
   where
-    mapper label error =
-      case error of
-        (ArgParsingError value)  -> SegmentParsingError label value
-        (NameParsingError value) -> ActionParsingError label value
+    mapper label value = SegmentParsingError label (T.unpack value)
 
-actionNameAndArg :: T.Text -> (T.Text, T.Text)
-actionNameAndArg action =
-  let (name, arg) = T.break (== ':') action
-      clearName = T.strip name
-      clearArg = parseReplaceArg $ T.strip $ T.drop 1 arg
-   in (clearName, clearArg)
-
-parseReplaceArg :: T.Text -> T.Text
-parseReplaceArg arg
-  | T.null arg = arg
-  | T.head arg == '\'' && T.last arg == '\'' =
-    T.dropAround (\ch -> ch == '\'') arg
-  | otherwise = arg
-
-mapEdges ::
+placeValuesToEdges ::
      Maybe String
-  -> Maybe Config.BlockEdges
-  -> Reader ValuesAndConfig (Either ModificationError (Maybe Block.Edges))
-mapEdges label mtext =
+  -> Maybe Block.Edges
+  -> Reader ValuesAndConfig (Either SegmentParsingError (Maybe Block.Edges))
+placeValuesToEdges label mtext =
   case mtext of
     Nothing -> pure $ Right Nothing
-    Just (Config.BlockEdges start end) -> do
+    Just (Block.Edges start end) -> do
       let wrapInParsingError =
-            Bif.first
-              (\err -> SegmentParsingError label (T.unpack err))
+            Bif.first (\err -> SegmentParsingError label (T.unpack err))
       startResult <- fmap (wrapInParsingError) (placeTemplateValues start)
       endResult <- fmap (wrapInParsingError) (placeTemplateValues end)
       let result =

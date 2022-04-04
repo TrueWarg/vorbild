@@ -12,7 +12,7 @@ import           Vorbild
 
 spec :: Spec
 spec = do
-  describe "value parsing tests" $ do
+  describe "generation tests" $ do
     sample_dir_1
     sample_file_1
     sample_dir_2
