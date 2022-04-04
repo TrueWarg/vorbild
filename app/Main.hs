@@ -74,7 +74,7 @@ instance Format ModificationError where
     "Unkown template value name " <> valueName <> labelAppendix blockLabel
   format (ActionParsingError blockLabel actionName) =
     "Unkown action name " <> actionName <> labelAppendix blockLabel
-  format (FileSegmentParsingError path name) = 
+  format (PathSegmentParsingError path name) = 
     "Unkown template value name " <>
     name <> " in file path " <> path
 
@@ -106,7 +106,7 @@ tryReadAndParseModifiebleConfigsFromJson =
   successOrPutError . readAndParseModifiebleConfigsFromJson
 
 tryExecModifications values placeholderConfig =
-  successOrPutError . execModifications values placeholderConfig
+  successOrPutError . execModificationsIO values placeholderConfig
 
 tryReadModifiebleConfigFilesOrEmpty :: FilePath -> IO [FilePath]
 tryReadModifiebleConfigFilesOrEmpty dir = do

@@ -33,6 +33,8 @@ library
       Vorbild.Modifieble.Block
       Vorbild.Modifieble.Config
       Vorbild.Modifieble.Exec
+      Vorbild.Modifieble.ExecIO
+      Vorbild.Modifieble.Mapper
       Vorbild.File
       Vorbild.Text
       Vorbild.Either
