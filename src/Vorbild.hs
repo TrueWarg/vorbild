@@ -1,3 +1,4 @@
+-- todo: reorganize modules to avoid names conflicts
 module Vorbild
   ( ValueConfigItem(..)
   , PlaceholderConfig(..)
@@ -16,8 +17,10 @@ module Vorbild
   , ModifiebleParsingError(..)
   , Descriptor(..)
   , Action(..)
+  , Edges(..)
   , ModificationError(..)
   , ValuesAndConfig(..)
+  , SegmentParsingError(..)
   , modify
   , readAndParseModifiebleConfigsFromJson
   , readAndParseConfigItemsFromJson
@@ -31,6 +34,7 @@ module Vorbild
   , getFiles
   , splitOnFilesAndDirs
   , execModificationsIO
+  , execModifications
   , mapBlockConfigList
   ) where
 
@@ -38,6 +42,7 @@ import           Vorbild.File
 import           Vorbild.Modifieble.Block
 import           Vorbild.Modifieble.Config
 import           Vorbild.Modifieble.ExecIO
+import           Vorbild.Modifieble.Exec
 import           Vorbild.Modifieble.Mapper
 import           Vorbild.Source
 import           Vorbild.TemplateValue.Config

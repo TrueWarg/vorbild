@@ -75,8 +75,9 @@ test-suite vorbild-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      ParseValueSpec
       GenerationSpec
+      ModifyFilesSpec
+      ParseValueSpec
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N

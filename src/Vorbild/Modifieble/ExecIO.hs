@@ -20,7 +20,7 @@ import           System.Directory                (doesFileExist)
 
 data ModificationError
   = FileNotFound FilePath
-  | SegmentParsingError (Maybe String) String
+  | ContentSegmentParsingError (Maybe String) String
   | ActionParsingError (Maybe String) String
   | PathSegmentParsingError FilePath String
 
@@ -57,7 +57,7 @@ execModificationIntenal config path descriptorConfigs = do
   let mapActionError (Mapper.ActionParsingError label action) =
         ActionParsingError label action
       mapSegmentError (PureExec.SegmentParsingError label value) =
-        SegmentParsingError label value
+        ContentSegmentParsingError label value
       modify =
         (Bif.first mapSegmentError) . PureExec.execModifications config content
       mapResult =

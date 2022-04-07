@@ -70,7 +70,7 @@ instance Format ModifiebleParsingError where
 
 instance Format ModificationError where
   format (FileNotFound path) = "File with path " <> path <> " not found"
-  format (SegmentParsingError blockLabel valueName) =
+  format (ContentSegmentParsingError blockLabel valueName) =
     "Unkown template value name " <> valueName <> labelAppendix blockLabel
   format (ActionParsingError blockLabel actionName) =
     "Unkown action name " <> actionName <> labelAppendix blockLabel
