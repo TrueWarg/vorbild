@@ -13,13 +13,15 @@ import           Vorbild
 spec :: Spec
 spec = do
   describe "generation tests" $ do
-    sample_dir_1
-    sample_file_1
-    sample_dir_2
-    sample_err_1
-    sample_err_2
+    sampleDir1
+    sampleDir2
+    sampleDir3
+    sampleFile1
+    sampleDir4
+    sampleErr1
+    sampleErr2
 
-sample_dir_1 = do
+sampleDir1 = do
   let values =
         Map.fromList $
         [ (TemplateValueId "module_name", [Single "gauss-dsb"])
@@ -31,12 +33,46 @@ sample_dir_1 = do
             ])
         ]
       dirs = [Dir "module.{{^package_name}}"]
-  it "sample_dir_1" $
+  it "sampleDir1" $
     shouldBe
       (generateFromTemplates placeHolderConfig1 values dirs)
       (Right [Dir "module.com.gauss-dsb.core"])
 
-sample_file_1 = do
+sampleDir2 = do
+  let values =
+        Map.fromList $
+        [ (TemplateValueId "module_name", [Single "gauss-dsb"])
+        , ( TemplateValueId "package_name"
+          , [ Single "com."
+            , Compound [ToCamel] (fromList [Single "gauss-dsb"])
+            , Single "."
+            , Compound [ToTitle] (fromList [Single "core"])
+            ])
+        ]
+      dirs = [Dir "module.{{^package_name#}}"]
+  it "sampleDir2" $
+    shouldBe
+      (generateFromTemplates placeHolderConfig1 values dirs)
+      (Right [Dir "module.com.gaussDsb.Core"])
+
+sampleDir3 = do
+  let values =
+        Map.fromList $
+        [ (TemplateValueId "module_name", [Single "gauss-dsbB"])
+        , ( TemplateValueId "package_name"
+          , [ Single "com."
+            , Compound [ToSnake] (fromList [Single "gauss-dsbB"])
+            , Single "."
+            , Compound [ToKebab] (fromList [Single "mainCore"])
+            ])
+        ]
+      dirs = [Dir "module.{{^package_name#}}"]
+  it "sampleDir3" $
+    shouldBe
+      (generateFromTemplates placeHolderConfig1 values dirs)
+      (Right [Dir "module.com.gauss_dsb_b.main-core"])
+
+sampleFile1 = do
   let values =
         Map.fromList $
         [ (TemplateValueId "package_name", [Single "paper.list"])
@@ -78,12 +114,12 @@ sample_file_1 = do
         }
        |]
       files = [FileAndContent "{{^full_path}}" template]
-  it "sample_file_1" $
+  it "sampleFile1" $
     shouldBe
       (generateFromTemplates placeHolderConfig1 values files)
       (Right [FileAndContent "paper/list/papers" expected])
 
-sample_dir_2 = do
+sampleDir4 = do
   let values =
         Map.fromList $
         [ (TemplateValueId "module_name", [Single "gauss-dsb"])
@@ -95,16 +131,16 @@ sample_dir_2 = do
             ])
         ]
       dirs = [Dir "module.||~~package_name^toLower^replace - .||"]
-  it "sample_dir_2" $
+  it "sampleDir4" $
     shouldBe
       (generateFromTemplates placeHolderConfig2 values dirs)
       (Right [Dir "module.com.gauss.dsb.core"])
 
-sample_err_1 = do
+sampleErr1 = do
   let values =
         Map.fromList $ [(TemplateValueId "module_name", [Single "gauss-dsb"])]
       dirs = [Dir "module.||~~some_unknown_value||"]
-  it "sample_dir_2" $
+  it "sampleDir4" $
     shouldBe
       (generateFromTemplates placeHolderConfig2 values dirs)
       (Left $
@@ -112,17 +148,13 @@ sample_err_1 = do
          "some_unknown_value"
          "module.||~~some_unknown_value||")
 
-sample_err_2 = do
-  let values =
-        Map.fromList $ [(TemplateValueId "lol", [Single "gauss-dsb"])]
+sampleErr2 = do
+  let values = Map.fromList $ [(TemplateValueId "lol", [Single "gauss-dsb"])]
       dirs = [Dir "{{^kek}}"]
-  it "sample_dir_2" $
+  it "sampleDir4" $
     shouldBe
       (generateFromTemplates placeHolderConfig1 values dirs)
-      (Left $
-       InTmpValueParsingError
-         "kek"
-         "{{^kek}}")
+      (Left $ InTmpValueParsingError "kek" "{{^kek}}")
 
 placeHolderConfig1 =
   PlaceholderConfig

@@ -2,6 +2,7 @@
 
 module Vorbild.Text where
 
+import qualified Data.Char as Ch
 import qualified Data.Text as T
 
 splitOnAnyOf :: [T.Text] -> T.Text -> [T.Text]
@@ -47,3 +48,39 @@ isSubText :: T.Text -> T.Text -> Bool
 isSubText query txt =
   let (_, after) = T.breakOn query txt
    in not $ T.null after
+
+toCamelCase :: T.Text -> T.Text
+toCamelCase txt = T.concat $ first : map (T.toTitle) remaining
+  where
+    first:remaining = splitOnAnyOf ["-", "_"] txt
+
+toSnakeCase :: T.Text -> T.Text
+toSnakeCase txt = T.pack $ toCamelAntogonistCase '-' '_' (T.unpack txt)
+
+toKebabCase :: T.Text -> T.Text
+toKebabCase txt = T.pack $ toCamelAntogonistCase '_' '-' (T.unpack txt)
+
+toCamelAntogonistCase :: Char -> Char -> String -> String
+toCamelAntogonistCase separator coSeparator = toCamelAntogonistCase' []
+  where
+    handle currentWord prev curr remaining
+      | prev == separator && curr == separator =
+        currentWord <>
+        (coSeparator : coSeparator : (toCamelAntogonistCase' [] remaining))
+      | prev == separator =
+        currentWord <>
+        (coSeparator : curr : (toCamelAntogonistCase' [] remaining))
+      | curr == separator =
+        currentWord <>
+        (prev : coSeparator : (toCamelAntogonistCase' [] remaining))
+      | Ch.isLower prev && Ch.isUpper curr =
+        currentWord <>
+        (prev :
+         coSeparator : (Ch.toLower curr) : (toCamelAntogonistCase' [] remaining))
+      | otherwise =
+        toCamelAntogonistCase' (currentWord <> [prev]) (curr : remaining)
+    toCamelAntogonistCase' currentWord txt =
+      case txt of
+        []                  -> currentWord
+        prev:curr:remaining -> handle currentWord prev curr remaining
+        [_]                 -> currentWord <> txt
