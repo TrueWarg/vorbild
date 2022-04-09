@@ -7,11 +7,19 @@ module Vorbild.TemplateValue.Modifier
   , tryParseModifier
   ) where
 
-import qualified Data.Text as T
+import qualified Data.Text    as T
+
+import           Vorbild.Text (toCamelCase, toKebabCase, toSnakeCase)
 
 data Modifier
   = Replace T.Text T.Text
   | ToLower
+  | ToUpper
+  | ToTitle
+  | ToCaseFold
+  | ToCamel
+  | ToSnake
+  | ToKebab
   deriving (Eq, Show)
 
 applyModifier :: T.Text -> Modifier -> T.Text
@@ -19,10 +27,17 @@ applyModifier txt modifier =
   case modifier of
     (Replace old new) -> applyReplace txt old new
     ToLower           -> T.toLower txt
+    ToUpper           -> T.toUpper txt
+    ToTitle           -> T.toTitle txt
+    ToCaseFold        -> T.toCaseFold txt
+    ToCamel           -> toCamelCase txt
+    ToSnake           -> toSnakeCase txt
+    ToKebab           -> toKebabCase txt
 
 applyModifiers :: T.Text -> [Modifier] -> T.Text
-applyModifiers txt []        = txt
-applyModifiers txt (modifier : remaining) = applyModifiers (applyModifier txt modifier) remaining
+applyModifiers txt [] = txt
+applyModifiers txt (modifier:remaining) =
+  applyModifiers (applyModifier txt modifier) remaining
 
 applyReplace txt old new =
   if (txt == "")
@@ -34,7 +49,13 @@ tryParseModifier txt = parse $ T.strip txt
   where
     parse statement
       | T.isPrefixOf replaceCode statement = tryParseReplace statement
-      | statement == toLowerCode = Just ToLower
+      | statement == "toLower" = Just ToLower
+      | statement == "toUpper" = Just ToUpper
+      | statement == "capitalize" = Just ToTitle
+      | statement == "toCaseFold" = Just ToCaseFold
+      | statement == "toCamel" = Just ToCamel
+      | statement == "toSnake" = Just ToSnake
+      | statement == "toKebab" = Just ToKebab
       | otherwise = Nothing
 
 tryParseReplace statement =
@@ -52,5 +73,3 @@ parseReplaceArg arg
   | otherwise = arg
 
 replaceCode = "replace"
-
-toLowerCode = "toLower"
