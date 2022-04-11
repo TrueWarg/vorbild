@@ -140,7 +140,7 @@ sampleErr1 = do
   let values =
         Map.fromList $ [(TemplateValueId "module_name", [Single "gauss-dsb"])]
       dirs = [Dir "module.||~~some_unknown_value||"]
-  it "sampleDir4" $
+  it "sampleErr1" $
     shouldBe
       (generateFromTemplates placeHolderConfig2 values dirs)
       (Left $
@@ -151,7 +151,7 @@ sampleErr1 = do
 sampleErr2 = do
   let values = Map.fromList $ [(TemplateValueId "lol", [Single "gauss-dsb"])]
       dirs = [Dir "{{^kek}}"]
-  it "sampleDir4" $
+  it "sampleErr2" $
     shouldBe
       (generateFromTemplates placeHolderConfig1 values dirs)
       (Left $ InTmpValueParsingError "kek" "{{^kek}}")

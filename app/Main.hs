@@ -74,13 +74,14 @@ instance Format ModificationError where
     "Unkown template value name " <> valueName <> labelAppendix blockLabel
   format (ActionParsingError blockLabel actionName) =
     "Unkown action name " <> actionName <> labelAppendix blockLabel
-  format (PathSegmentParsingError path name) = 
-    "Unkown template value name " <>
-    name <> " in file path " <> path
+  format (PathSegmentParsingError path name) =
+    "Unkown template value name " <> name <> " in file path " <> path
+  format (BlockError start end) =
+    "Cannot modify block with start '" <> start <> "' and end '" <> end <> "'"
 
-labelAppendix blockLabel = 
+labelAppendix blockLabel =
   case blockLabel of
-    Nothing -> ""
+    Nothing    -> ""
     Just label -> " in " <> label <> " descriptor"
 
 successOrPutError :: Format e => IO (Either e s) -> IO s
