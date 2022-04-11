@@ -21,7 +21,8 @@ spec = do
     sampe5
     errSample1
     errSample2
-
+    errSample3
+    
 sampe1 = do
   let config = ValuesAndConfig values placeHolderConfig
       content =
@@ -203,6 +204,19 @@ errSample2 = do
         ]
       expected = Left $ SegmentParsingError label $ T.unpack "package_name"
   it "errSample2" $
+    shouldBe (execModifications config content descriptors) expected
+
+errSample3 = do
+  let config = ValuesAndConfig values placeHolderConfig
+      content = "Tag tag"
+      descriptors =
+        [ Descriptor
+            Nothing
+            (Just $ Edges "tag" "tag")
+            [Append " some_text "]
+        ]
+      expected = Left $ BlockSplitError (T.unpack "tag") (T.unpack "tag")
+  it "errSample3" $
     shouldBe (execModifications config content descriptors) expected
 
 values =

@@ -20,7 +20,7 @@ module Vorbild
   , Edges(..)
   , ModificationError(..)
   , ValuesAndConfig(..)
-  , SegmentParsingError(..)
+  , ExecError(..)
   , modify
   , readAndParseModifiebleConfigsFromJson
   , readAndParseConfigItemsFromJson

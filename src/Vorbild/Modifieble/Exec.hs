@@ -1,6 +1,6 @@
 module Vorbild.Modifieble.Exec
   ( execModifications
-  , SegmentParsingError(..)
+  , ExecError(..)
   ) where
 
 import           Control.Monad.Reader            (Reader, runReader)
@@ -11,32 +11,35 @@ import           Vorbild.Either                  (eitherZipWith,
 import qualified Vorbild.Modifieble.Block        as Block
 import           Vorbild.TemplateValue.Placement
 
-data SegmentParsingError =
-  SegmentParsingError (Maybe String) String
+data ExecError
+  = SegmentParsingError (Maybe String) String
+  | BlockSplitError String String
   deriving (Show, Eq)
 
 execModifications ::
      ValuesAndConfig
   -> T.Text
   -> [Block.Descriptor]
-  -> Either SegmentParsingError T.Text
+  -> Either ExecError T.Text
 execModifications valuesAndConfig text descriptorConfigs =
   let placeResult =
         runReader (placeValuesToBlockList descriptorConfigs) valuesAndConfig
-      modifyResult =
-        fmap (\descriptors -> Block.modify text (descriptors)) placeResult
+      errorMapper (Block.BlockSplitError start end) =
+        BlockSplitError (T.unpack start) (T.unpack end)
+      modify = (Bif.first errorMapper) . (Block.modify text)
+      modifyResult = placeResult >>= modify
    in modifyResult
 
 placeValuesToBlockList ::
      [Block.Descriptor]
-  -> Reader ValuesAndConfig (Either SegmentParsingError [Block.Descriptor])
+  -> Reader ValuesAndConfig (Either ExecError [Block.Descriptor])
 placeValuesToBlockList = (fmap foldr') . traverse placeValuesToBlock
   where
     foldr' = foldr rightAccumulateWithList (Right [])
 
 placeValuesToBlock ::
      Block.Descriptor
-  -> Reader ValuesAndConfig (Either SegmentParsingError Block.Descriptor)
+  -> Reader ValuesAndConfig (Either ExecError Block.Descriptor)
 placeValuesToBlock (Block.Descriptor label edges actions) = do
   edgesResult <- placeValuesToEdges label edges
   actionsResult <- fmap (mapActionError label) (placeValuesToActions actions)
@@ -71,7 +74,7 @@ placeValuesToAction action =
 mapActionError ::
      Maybe String
   -> (Either T.Text [Block.Action])
-  -> (Either SegmentParsingError [Block.Action])
+  -> (Either ExecError [Block.Action])
 mapActionError label actions = Bif.first (mapper label) actions
   where
     mapper label value = SegmentParsingError label (T.unpack value)
@@ -79,7 +82,7 @@ mapActionError label actions = Bif.first (mapper label) actions
 placeValuesToEdges ::
      Maybe String
   -> Maybe Block.Edges
-  -> Reader ValuesAndConfig (Either SegmentParsingError (Maybe Block.Edges))
+  -> Reader ValuesAndConfig (Either ExecError (Maybe Block.Edges))
 placeValuesToEdges label mtext =
   case mtext of
     Nothing -> pure $ Right Nothing

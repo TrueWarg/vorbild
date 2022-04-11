@@ -23,6 +23,7 @@ data ModificationError
   | ContentSegmentParsingError (Maybe String) String
   | ActionParsingError (Maybe String) String
   | PathSegmentParsingError FilePath String
+  | BlockError String String
 
 execModificationsIO ::
      Map.Map TemplateValueId [TemplateValueSegment]
@@ -56,8 +57,11 @@ execModificationIntenal config path descriptorConfigs = do
   content <- TIO.readFile path
   let mapActionError (Mapper.ActionParsingError label action) =
         ActionParsingError label action
-      mapSegmentError (PureExec.SegmentParsingError label value) =
-        ContentSegmentParsingError label value
+      mapSegmentError err =
+        case err of
+          PureExec.SegmentParsingError label value ->
+            ContentSegmentParsingError label value
+          PureExec.BlockSplitError start end -> BlockError start end
       modify =
         (Bif.first mapSegmentError) . PureExec.execModifications config content
       mapResult =

@@ -4,12 +4,17 @@ module Vorbild.Modifieble.Block
   ( Descriptor(..)
   , Action(..)
   , Edges(..)
+  , BlockSplitError(..)
   , modify
   ) where
 
 import           Data.List    (intersperse, sort, sortBy)
 import qualified Data.Text    as T (Text, concat, lines)
 import           Vorbild.Text (breakOnThree, isSubText)
+
+data BlockSplitError =
+  BlockSplitError T.Text T.Text
+  deriving (Eq)
 
 data Descriptor =
   Descriptor
@@ -32,22 +37,23 @@ data Action
   | SortLinesDesc
   deriving (Show, Eq)
 
-modify :: T.Text -> [Descriptor] -> T.Text
-modify text [] = text
+modify :: T.Text -> [Descriptor] -> Either BlockSplitError T.Text
+modify text [] = Right text
 modify text (descriptor:descriptors) =
-  modify (modifySingle text descriptor) descriptors
+  modifySingle text descriptor >>= (\txt -> modify txt descriptors)
 
-modifySingle :: T.Text -> Descriptor -> T.Text
+modifySingle :: T.Text -> Descriptor -> Either BlockSplitError T.Text
 modifySingle text descriptor =
   let edges = dEdges descriptor
       actions = dActions descriptor
       breakOnThree' start end txt =
         case (breakOnThree start end txt) of
-          (Left _) -> text
+          (Left _) -> Left $ BlockSplitError start end
           Right (beforeStartIncl, body, afterEndIncl) ->
-            beforeStartIncl <> applyActionList body actions <> afterEndIncl
+            Right
+              (beforeStartIncl <> applyActionList body actions <> afterEndIncl)
    in case edges of
-        Nothing                -> applyActionList text actions
+        Nothing                -> Right $ applyActionList text actions
         Just (Edges start end) -> breakOnThree' start end text
 
 applyAction :: T.Text -> Action -> T.Text
