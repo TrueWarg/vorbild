@@ -5,14 +5,26 @@ module Vorbild.Text where
 import qualified Data.Char as Ch
 import qualified Data.Text as T
 
-splitOnAnyOf :: [T.Text] -> T.Text -> [T.Text]
-splitOnAnyOf separators txt =
-  foldl (\acc separator -> acc >>= T.splitOn separator) [txt] separators
-
 data BreakOnThreeError
   = EmptyArg
   | Fail
   deriving (Show, Eq)
+
+splitOnAnyOf :: [T.Text] -> T.Text -> [T.Text]
+splitOnAnyOf separators txt =
+  foldl (\acc separator -> acc >>= T.splitOn separator) [txt] separators
+
+splitByTagsInclude :: T.Text -> T.Text -> T.Text -> [T.Text]
+splitByTagsInclude _ _ "" = []
+splitByTagsInclude start end txt =
+  let (beforeStart, afterStartIncl) = T.breakOn start txt
+      (beforEnd, afterEndIncl) = T.breakOn end afterStartIncl
+      beforEndIncl =
+        if (T.null afterEndIncl)
+          then beforEnd
+          else beforEnd <> end
+      afterEnd = T.drop (T.length end) afterEndIncl
+   in beforeStart : beforEndIncl : splitByTagsInclude start end afterEnd
 
 -- OK
 -- "aaaaaaaaSTARTaaaaaaaaENDaaa"
