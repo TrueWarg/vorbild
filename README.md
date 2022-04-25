@@ -117,7 +117,15 @@ final `file_path` value.
 
 More general form of this modifier is `replace '<str1>' '<str2>'`. 
 
-Currently only `replace` and `toLower` (convert text to lower case) modifiers are supported.
+Currently supported modifiers:
+* `replace 'old' 'new'`
+* `toLower`
+* `toUpper`
+* `capitalize`
+* `toCaseFold`
+* `toCamel`
+* `toSnake`
+* `toKebab`
 
 `#` is just a separator for modifiers. Several modifiers can be used together:
 `#replace 'a' 'b'#toLower#replace 'cd' 'xy'`
@@ -150,6 +158,101 @@ General command looks like
 ```
 
 If `-d` is not specified, current directory will be used.
+
+
+### Modify existing files
+
+Sometimes project has some files which should be updated after using templater. 
+Let there's file with all controllers :
+
+```kotlin
+// com/core/temperature/flow.kt
+
+package com.core.temperature
+
+flow {
+  ConverterController
+  OperationsController
+}
+
+```
+
+It's needed to add MeasurementController in block `flow { ... }` after creation its from template.
+For this case define in `<template>/modifieble` special descriptor `<descriptor_name>.json`.
+
+```bash
+<templates-folder>
+---<template1-folder>
+    ---source
+    ---modifieble (!)
+       ---<descriptor1>.json
+       ...
+       ---<descriptorN>.json
+    ---values.json
+    ---placeholder.json (optional)
+...
+---<templateN-folder>
+    ---source
+    ---modifieble (!)
+       ---<descriptor1>.json
+       ...
+       ---<descriptorN>.json
+    ---values.json
+    ---placeholder.json (optional)
+```
+
+For this example:
+
+```bash
+vorbild-templates
+---module
+    ---modifieble
+       ---flow.json
+    ---source
+       ---{{^file_path}}/{{^feature_name}}Controller.kt
+    ---values.json
+```
+
+Where flow.json:
+
+```json
+{
+    "filePath" : "{{^file_path}}",
+    "blockDescriptors" : [{
+        "edges": {
+          "start": "flow {\n",
+          "end": "}"
+        },
+        "id" : "flow",
+        "actions" : ["append:'\n  {{^feature_name}}Controller'", "sortLines"]
+    }]
+}
+```
+Here `vorbild` will use specified values from previous sections to fild existing
+file, append new text block between defined `edges` and sort all lines:
+
+```kotlin
+// com/core/temperature/flow.kt
+
+package com.core.temperature
+
+flow {
+  ConverterController
+  MeasurementController
+  OperationsController
+}
+
+```
+
+Currently supported actions:
+* `append:'<arg>'`
+* `prepend:'<arg>'`
+* `appendOnce:'<arg>'` - if text block already exist then action will not be applied.
+* `prependOnce:<arg>`
+* `sortLines`
+* `sortLinesDesc`
+
+If edges aren't specified then full file content will be considered as block.
 
 ## Installation 
 
