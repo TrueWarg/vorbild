@@ -25,7 +25,7 @@ Create your templates:
 ```
 
 Directory `source` contains any files with paths and file content placeholder.
-For example
+For example:
 
 ```bash
 vorbild-templates
@@ -73,7 +73,7 @@ Values are specified in `values.json`:
 ```
 If an item doesn't contain `value` then it must be specified by the user.
 
-In the example above we have 
+Taking into account example above: 
 
 ```json
 [
@@ -96,7 +96,7 @@ In the example above we have
 ]
 ```
 
-Suppose that user input is `package_name = core`, `module_name = temperature`, 
+Suppose that user inputs are `package_name = core`, `module_name = temperature`, 
 `feature_name = Measurement`. So `vorbild` will generate this:
 
 ```kotlin
@@ -132,7 +132,7 @@ Currently supported modifiers:
 
 ### Placeholder
 
-More general form for value placeholders looks like this
+More general form for value placeholders looks like this:
 
 `<openTag><valuePrefix><value><modifierSeparator><modifier1>...<modifierSeparator><modifierN><closeTag>`
 
@@ -152,7 +152,7 @@ If you want to use a default config, just do not add this file to the template f
 
 ### Command
 
-General command looks like 
+General command looks like: 
 ```bash
    vorbild (-s|--src template path) [-d|--dst destination path]
 ```
@@ -162,8 +162,8 @@ If `-d` is not specified, current directory will be used.
 
 ### Modify existing files
 
-Sometimes project has some files which should be updated after using templater. 
-Let there's file with all controllers :
+Sometimes project has some files which should be updated after using template engine. 
+Assumption is that file contains all controllers:
 
 ```kotlin
 // com/core/temperature/flow.kt
@@ -177,7 +177,7 @@ flow {
 
 ```
 
-It's needed to add MeasurementController in block `flow { ... }` after creation its from template.
+It's needed to add MeasurementController in block `flow { ... }` after its creation from template.
 For this case define in `<template>/modifieble` special descriptor `<descriptor_name>.json`.
 
 ```bash
