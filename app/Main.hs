@@ -56,13 +56,13 @@ instance Format ConfigParsingError where
     "File parsing error " <> srcPath <> ": " <> cause
 
 instance Format ValueParsingError where
-  format (UnkonwnName valueName) = "Unknow value with name: " <> valueName
+  format (UnkonwnName valueName) = "Unknown value with name: " <> valueName
   format (CycleDeclaration valueName) =
     "Cycle declaration value with name: " <> valueName
 
 instance Format InTmpValueParsingError where
   format (InTmpValueParsingError valueName path) =
-    "Unknow value with name: " <> valueName <> " in template path: " <> path
+    "Unknown value with name: " <> valueName <> " in template path: " <> path
 
 instance Format ModifiebleParsingError where
   format (ModifiebleParsingError cause srcPath) =
