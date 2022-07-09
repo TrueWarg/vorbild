@@ -15,38 +15,41 @@ import           System.Directory (createDirectory, createDirectoryIfMissing,
 import           System.Exit      (exitFailure)
 import           System.IO
 
+import           Main.Utf8        (withUtf8)
 import           Vorbild
 
 main :: IO ()
-main = do
-  option <- parse
-  templatePath <- correctDir $ Options.templatePath option
-  destination <-
-    case Options.destination option of
-      NoSpec           -> getCurrentDirectory
-      Options.Dir path -> correctDir path
-  valueConfigPath <- correctFile $ templatePath </> valueConfigName
-  templatesSourcePath <- correctDir $ templatePath </> templateSourceDir
-  valueConfigItems <- tryReadAndParseConfigItemsFromJson valueConfigPath
-  placeholderConfig <- tryReadPlaceholderConfigOrDefault templatePath
-  modifiebleFiles <-
-    tryReadModifiebleConfigFilesOrEmpty $ templatePath </> modifiebleSourceDir
-  modifiebleConfigs <- tryReadAndParseModifiebleConfigsFromJson modifiebleFiles
-  values <- tryPrepareAndParseValues placeholderConfig valueConfigItems
-  putStrLn "Processing..."
-  sources <- getSourcesRecursive templatesSourcePath >>= toSourceAndContent
-  generated <- tryGenerateFromTemplates placeholderConfig values sources
-  let replaceRoot' txtPath =
-        replaceRoot templatesSourcePath destination (T.unpack txtPath)
-      writeFiles src =
-        case src of
-          Vorbild.Dir path -> createDirectory (replaceRoot' path)
-          FileAndContent path content ->
-            createAndWriteFile (replaceRoot' path) content
-  _ <- traverse writeFiles generated
-  tryExecModifications values placeholderConfig modifiebleConfigs
-  putStrLn "Done"
-  pure ()
+main =
+  withUtf8 $ do
+    option <- parse
+    templatePath <- correctDir $ Options.templatePath option
+    destination <-
+      case Options.destination option of
+        NoSpec           -> getCurrentDirectory
+        Options.Dir path -> correctDir path
+    valueConfigPath <- correctFile $ templatePath </> valueConfigName
+    templatesSourcePath <- correctDir $ templatePath </> templateSourceDir
+    valueConfigItems <- tryReadAndParseConfigItemsFromJson valueConfigPath
+    placeholderConfig <- tryReadPlaceholderConfigOrDefault templatePath
+    modifiebleFiles <-
+      tryReadModifiebleConfigFilesOrEmpty $ templatePath </> modifiebleSourceDir
+    modifiebleConfigs <-
+      tryReadAndParseModifiebleConfigsFromJson modifiebleFiles
+    values <- tryPrepareAndParseValues placeholderConfig valueConfigItems
+    putStrLn "Processing..."
+    sources <- getSourcesRecursive templatesSourcePath >>= toSourceAndContent
+    generated <- tryGenerateFromTemplates placeholderConfig values sources
+    let replaceRoot' txtPath =
+          replaceRoot templatesSourcePath destination (T.unpack txtPath)
+        writeFiles src =
+          case src of
+            Vorbild.Dir path -> createDirectory (replaceRoot' path)
+            FileAndContent path content ->
+              createAndWriteFile (replaceRoot' path) content
+    _ <- traverse writeFiles generated
+    tryExecModifications values placeholderConfig modifiebleConfigs
+    putStrLn "Done"
+    pure ()
 
 class Format a where
   format :: a -> String
@@ -77,7 +80,7 @@ instance Format ModificationError where
   format (PathSegmentParsingError path name) =
     "Unkown template value name " <> name <> " in file path " <> path
   format (BlockError start end) =
-    "Cannot modify block with start '" <> start <> "' and end '" <> end <> "'"
+    "Cannot modify block with start = '" <> start <> "' and end = '" <> end <> "'"
 
 labelAppendix blockLabel =
   case blockLabel of
